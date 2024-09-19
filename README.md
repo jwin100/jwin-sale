@@ -12,7 +12,7 @@ java后台：[https://gitee.com/jwin100/sale](https://gitee.com/jwin100/sale)
 
 [//]: # (小程序：[https://gitee.com/gz-yami/mall4m]&#40;https://gitee.com/gz-yami/mall4m&#41;)
 
-[//]: # (uni-app：[https://gitee.com/gz-yami/mall4uni]&#40;https://gitee.com/gz-yami/mall4uni&#41;)
+uni-app：[https://gitee.com/jwin100/jwin-mobile](https://gitee.com/jwin100/jwin-mobile)
 
 [//]: # (## 部署教程)
 
