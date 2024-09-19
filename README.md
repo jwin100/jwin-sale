@@ -14,7 +14,7 @@ java后台：[https://gitee.com/jwin100/sale](https://gitee.com/jwin100/sale)
 
 [//]: # (uni-app：[https://gitee.com/gz-yami/mall4uni]&#40;https://gitee.com/gz-yami/mall4uni&#41;)
 
-## 部署教程
+[//]: # (## 部署教程)
 
 [//]: # (ps: 如果你不清楚如何启动我们的商城，请仔细阅wiki当中的文档)
 
@@ -30,7 +30,11 @@ web搜索 **jwin100.cn** 可以获得多个版本的演示
 
 ## 相关截图
 
-[//]: # (![商城]&#40;https://images.gitee.com/uploads/images/2021/1110/145209_2ec1ad04_5094767.png "商城.png"&#41;)
+![捷盈收银](https://picture.jwin100.cn/default/document/jwin01.png "捷盈收银系统.png")
+
+![捷盈收银](https://picture.jwin100.cn/default/document/jwin02.png "捷盈收银系统.png")
+
+![捷盈收银](https://picture.jwin100.cn/default/document/jwin03.png "捷盈收银系统.png")
 
 ## 提交反馈
 
