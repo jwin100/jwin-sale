@@ -36,6 +36,12 @@ web搜索 **jwin100.cn** 可以获得多个版本的演示
 
 ![捷盈收银](https://picture.jwin100.cn/default/document/jwin03.png "捷盈收银系统.png")
 
+![捷盈收银](https://picture.jwin100.cn/default/document/jwin04.png "捷盈收银系统.png")
+
+![捷盈收银](https://picture.jwin100.cn/default/document/jwin05.png "捷盈收银系统.png")
+
+![捷盈收银](https://picture.jwin100.cn/default/document/jwin06.png "捷盈收银系统.png")
+
 ## 提交反馈
 
 - 捷盈收银官网 [https://jwin100.cn](https://jwin100.cn)
