@@ -2,7 +2,7 @@
 
 ## 捷盈收银系统java后台：[https://gitee.com/jwin100/jwin-sale](https://gitee.com/jwin100/jwin-sale)
 
-*本项目是一个使用spring cloud开发的收银系统后台项目，另外还包括web前段项目、小程序收银，组成了捷盈收银系统。
+*本项目是一个使用spring cloud开发的收银系统后台项目，另外还包括web前端项目、小程序收银，组成了捷盈收银系统。
 
 ## 项目链接
 
