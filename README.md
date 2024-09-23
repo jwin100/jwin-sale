@@ -12,7 +12,13 @@ java后台：[https://gitee.com/jwin100/jwin-sale](https://gitee.com/jwin100/jwi
 
 收银机端：[https://gitee.com/jwin100/jwin-tablet](https://gitee.com/jwin100/jwin-tablet)
 
-## 商城演示地址
+## 收银系统演示地址
+
+1.微信小程序
+
+![输入图片说明](https://picture.jwin100.cn/default/document/qrcode.jpg)
+
+2.后台地址
 
 web搜索 **jwin100.cn** 可以获得多个版本的演示
 
