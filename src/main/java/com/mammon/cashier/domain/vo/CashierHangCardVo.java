@@ -24,6 +24,8 @@ public class CashierHangCardVo {
 
     private String skuName;
 
+    private String picture;
+
     /**
      * 数量
      */
