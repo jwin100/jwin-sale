@@ -25,11 +25,11 @@ public class AccountDao {
 
         StringBuilder sb = new StringBuilder();
         sb.append("INSERT INTO m_clerk_account (")
-                .append(" id, merchant_no, store_no, username, password, ")
+                .append(" id, merchant_no, store_no, username, password, mobile_cash_mode, ")
                 .append(" name, phone, email, open_id, ")
                 .append(" status, create_time, update_time ")
                 .append(" ) VALUES ( ")
-                .append(" :id, :merchantNo, :storeNo, :username, :password, ")
+                .append(" :id, :merchantNo, :storeNo, :username, :password, :mobileCashMode, ")
                 .append(" :name, :phone, :email, :openId, ")
                 .append(" :status, :createTime, :updateTime ")
                 .append(" ) ");
@@ -147,6 +147,21 @@ public class AccountDao {
 
         params.addValue("newPassword", newPassword);
         params.addValue("updateTime", LocalDateTime.now());
+        params.addValue("id", id);
+        return namedParameterJdbcTemplate.update(sql, params);
+    }
+
+    public int editMobileCashMode(String id, int cashMode) {
+        StringBuilder sb = new StringBuilder();
+        MapSqlParameterSource params = new MapSqlParameterSource();
+
+        sb.append("update m_clerk_account ")
+                .append(" set ")
+                .append(" mobile_cash_mode     = :cashMode ")
+                .append(" where id      = :id ");
+        String sql = sb.toString();
+
+        params.addValue("cashMode", cashMode);
         params.addValue("id", id);
         return namedParameterJdbcTemplate.update(sql, params);
     }

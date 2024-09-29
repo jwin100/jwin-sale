@@ -1,6 +1,7 @@
 package com.mammon.clerk.service;
 
 import cn.hutool.core.collection.CollUtil;
+import com.mammon.clerk.domain.enums.AccountCashMode;
 import com.mammon.common.Generate;
 import com.mammon.common.PageResult;
 import com.mammon.common.PageVo;
@@ -101,6 +102,7 @@ public class AccountService {
         entity.setId(Generate.generateUUID());
         entity.setUsername(dto.getPhone());
         entity.setPassword(rawPassword);
+        entity.setMobileCashMode(AccountCashMode.SCAN_MODE.getCode());
         entity.setOpenId(dto.getOpenId());
         entity.setStatus(CommonStatus.ENABLED.getCode());
         entity.setCreateTime(LocalDateTime.now());
@@ -206,6 +208,10 @@ public class AccountService {
 
     public void editPassword(String id, String originalPassword, String newPassword) {
         accountDao.editPassword(id, originalPassword, newPassword);
+    }
+
+    public void editMobileCashMode(String id, int cashMode) {
+        accountDao.editMobileCashMode(id, cashMode);
     }
 
     public void delete(long merchantNo, String id) {

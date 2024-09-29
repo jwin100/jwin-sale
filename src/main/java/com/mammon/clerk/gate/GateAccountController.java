@@ -21,6 +21,15 @@ public class GateAccountController {
     @Resource
     private AccountService accountService;
 
+    @PutMapping("/cash-mode/{cashMode}")
+    public ResultJson<Void> edit(@RequestHeader long merchantNo,
+                                 @RequestHeader long storeNo,
+                                 @RequestHeader String accountId,
+                                 @PathVariable int cashMode) {
+        accountService.editMobileCashMode(accountId, cashMode);
+        return ResultJson.ok();
+    }
+
     /**
      * 商户信息
      *

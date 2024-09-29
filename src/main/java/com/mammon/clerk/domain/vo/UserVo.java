@@ -1,5 +1,6 @@
 package com.mammon.clerk.domain.vo;
 
+import com.mammon.clerk.domain.enums.AccountCashMode;
 import com.mammon.enums.CommonDeleted;
 import com.mammon.enums.CommonStatus;
 import com.mammon.enums.IEnum;
@@ -25,6 +26,8 @@ public class UserVo {
     private String roleId;
     private RoleVo role;
     private LocalDateTime createTime;
+    private int mobileCashMode;
+    private String mobileCashModeName;
 
     public String getStatusName() {
         return IEnum.getNameByCode(this.getStatus(), CommonStatus.class);
@@ -32,5 +35,9 @@ public class UserVo {
 
     public String getDeletedName() {
         return IEnum.getNameByCode(this.getDeleted(), CommonDeleted.class);
+    }
+
+    public String getMobileCashModeName() {
+        return IEnum.getNameByCode(this.getMobileCashMode(), AccountCashMode.class);
     }
 }

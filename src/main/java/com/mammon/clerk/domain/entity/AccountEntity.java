@@ -26,6 +26,8 @@ public class AccountEntity {
 
     private String email;
 
+    private int mobileCashMode;
+
     private String openId;
 
     private int status;
