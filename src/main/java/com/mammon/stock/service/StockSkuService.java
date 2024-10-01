@@ -1,14 +1,19 @@
 package com.mammon.stock.service;
 
+import cn.hutool.core.collection.CollUtil;
 import com.mammon.common.Generate;
 import com.mammon.common.PageResult;
 import com.mammon.common.PageVo;
 import com.mammon.enums.CommonDeleted;
 import com.mammon.enums.CommonStatus;
 import com.mammon.exception.CustomException;
+import com.mammon.goods.domain.entity.CategoryEntity;
 import com.mammon.goods.domain.entity.UnitEntity;
+import com.mammon.goods.domain.enums.CategoryLevel;
 import com.mammon.goods.domain.enums.SpuCountedType;
+import com.mammon.goods.domain.query.CategoryListQuery;
 import com.mammon.goods.domain.vo.SkuSpecVo;
+import com.mammon.goods.service.CategoryService;
 import com.mammon.goods.service.SkuSpecService;
 import com.mammon.goods.service.UnitService;
 import com.mammon.stock.dao.StockSkuDao;
@@ -23,13 +28,16 @@ import com.mammon.stock.domain.vo.*;
 import com.mammon.utils.AmountUtil;
 import com.mammon.utils.JsonUtil;
 import com.mammon.utils.StockUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -54,6 +62,8 @@ public class StockSkuService {
     @Resource
     private StockSpuService stockSpuService;
     private StockSpuDao stockSpuDao;
+    @Autowired
+    private CategoryService categoryService;
 
     /**
      * 批量保存商品规格信息到门店商品规格表中
@@ -203,7 +213,7 @@ public class StockSkuService {
     }
 
     public PageVo<StockSkuDetailListVo> page(long merchantNo, long storeNo, String accountId, StockSkuPageQuery query) {
-
+        query.setCategoryIds(convertCategoryIds(merchantNo, query.getCategoryIds(), query.getCategoryId()));
         int total = stockSkuDao.countPage(merchantNo, storeNo, query);
         if (total <= 0) {
             return PageResult.of();
@@ -426,5 +436,24 @@ public class StockSkuService {
             stockSkuVo.setUnitType(unit.getType());
         }
         return stockSkuVo;
+    }
+
+    private List<String> convertCategoryIds(long merchantNo, List<String> categoryIds, String categoryId) {
+        if (CollectionUtils.isEmpty(categoryIds)) {
+            categoryIds = new ArrayList<>();
+        }
+        if (StringUtils.isBlank(categoryId)) {
+            return categoryIds;
+        }
+        categoryIds.add(categoryId);
+
+        CategoryListQuery categoryQuery = new CategoryListQuery();
+        categoryQuery.setPid(categoryId);
+        categoryQuery.setLevel(CategoryLevel.TWO.getCode());
+        List<CategoryEntity> list = categoryService.findAll(merchantNo, categoryQuery);
+        if (CollUtil.isNotEmpty(list)) {
+            categoryIds.addAll(list.stream().map(CategoryEntity::getId).collect(Collectors.toList()));
+        }
+        return categoryIds;
     }
 }

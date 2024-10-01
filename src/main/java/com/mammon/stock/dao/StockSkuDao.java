@@ -10,6 +10,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -290,6 +291,14 @@ public class StockSkuDao {
                     .append(" OR sku.sku_code like :searchKey OR sku.sku_no like :searchKey OR sku.sku_name like :searchKey ")
                     .append(" ) ");
             params.addValue("searchKey", "%" + query.getSearchKey() + "%");
+        }
+        if (!CollectionUtils.isEmpty(query.getCategoryIds())) {
+            sb.append(" AND spu.category_id in ( :categoryIds )");
+            params.addValue("categoryIds", query.getCategoryIds());
+        }
+        if (query.getCountedType() != null) {
+            sb.append(" AND spu.counted_type = :countedType ");
+            params.addValue("countedType", query.getCountedType());
         }
         if (query.getStatus() != null) {
             sb.append(" AND spu.status = :status ");
