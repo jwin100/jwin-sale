@@ -80,6 +80,8 @@ public class StockSkuDetailListVo {
 
     private String unitTypeName;
 
+    private int countedType;
+
     /**
      * 规格
      */

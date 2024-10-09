@@ -243,6 +243,7 @@ public class StockSkuService {
             stockSkuVo.setReferenceAmount(AmountUtil.parseBigDecimal(stockSku.getReferenceAmount()));
             stockSkuVo.setSellStock(StockUtil.parseBigDecimal(stockSku.getSellStock()));
             stockSkuVo.setSkuWeight(StockUtil.parseBigDecimal(stockSku.getSkuWeight()));
+            stockSkuVo.setCountedType(stockSpu.getCountedType());
             // 商品spu的状态
             stockSkuVo.setStatus(stockSpu.getStatus());
             if (unit != null) {
