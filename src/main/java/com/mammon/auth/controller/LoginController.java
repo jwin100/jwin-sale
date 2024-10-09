@@ -8,8 +8,10 @@ import com.mammon.auth.domain.vo.*;
 import com.mammon.auth.service.SmsCaptchaService;
 import com.mammon.common.ResultJson;
 import com.mammon.auth.service.AuthService;
+import com.mammon.merchant.service.MerchantNoGenerate;
 import com.mammon.sms.enums.SmsTempTypeEnum;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,6 +30,8 @@ public class LoginController {
 
     @Resource
     private SmsCaptchaService smsCaptchaService;
+    @Autowired
+    private MerchantNoGenerate merchantNoGenerate;
 
     /**
      * 发送短信验证码
@@ -75,6 +79,7 @@ public class LoginController {
     public ResultJson<MiniAppLoginVo> miniappLogin(@PathVariable("channelCode") String channelCode,
                                                    @RequestBody MiniAppLoginDto dto,
                                                    HttpServletRequest request) {
+        log.info("公众平台小程序登录，code:{}", dto.getCode());
         return ResultJson.ok(authService.miniappLogin(request, channelCode, dto));
     }
 
@@ -89,6 +94,17 @@ public class LoginController {
     public ResultJson<MiniAppLoginVo> miniappPhoneLogin(@PathVariable("channelCode") String channelCode,
                                                         @RequestBody MiniAppPhoneLoginDto dto,
                                                         HttpServletRequest request) {
+        log.info("公众平台手机号快速验证登录，openId: {}", dto.getOpenId());
         return ResultJson.ok(authService.miniappPhoneLogin(request, channelCode, dto));
     }
+
+    /**
+     * 测试生成商户号
+     *
+     * @return
+     */
+//    @GetMapping("/generate-code")
+//    public ResultJson<Long> generateCode() {
+//        return ResultJson.ok(merchantNoGenerate.create());
+//    }
 }

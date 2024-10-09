@@ -3,6 +3,7 @@ package com.mammon.auth.service;
 import com.mammon.auth.domain.vo.LoginVo;
 import com.mammon.exception.CustomException;
 import com.mammon.merchant.domain.enums.BasicConfigConst;
+import com.mammon.merchant.service.MerchantNoGenerate;
 import com.mammon.merchant.service.MerchantService;
 import com.mammon.merchant.service.MerchantStoreService;
 import com.mammon.auth.domain.dto.RegisterDto;
@@ -10,6 +11,7 @@ import com.mammon.clerk.service.AccountService;
 import com.mammon.service.RedisService;
 import com.mammon.utils.ShortSnowUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +40,9 @@ public class GenerateService {
     @Resource
     private AuthService authService;
 
+    @Resource
+    private MerchantNoGenerate merchantNoGenerate;
+
     /**
      * 注册用户并返回登录信息
      *
@@ -51,7 +56,7 @@ public class GenerateService {
     public LoginVo register(HttpServletRequest request, RegisterDto dto) {
         smsCaptchaService.validSmsCaptcha(dto.getPhone(), dto.getSmsCaptcha());
         validExists(dto.getPhone());
-        long merchantNo = ShortSnowUtil.snowFlake();
+        long merchantNo = merchantNoGenerate.create();
         long storeNo = BasicConfigConst.STORE_START_NO + 1;
 
         String accountId = accountService.register(merchantNo, storeNo, dto.getPhone(), null);
@@ -71,7 +76,7 @@ public class GenerateService {
     @Transactional(rollbackFor = Exception.class)
     public void register(RegisterDto dto) {
         validExists(dto.getPhone());
-        long merchantNo = ShortSnowUtil.snowFlake();
+        long merchantNo = merchantNoGenerate.create();
         long storeNo = BasicConfigConst.STORE_START_NO + 1;
         String accountId = accountService.register(merchantNo, storeNo, dto.getPhone(), dto.getOpenId());
         merchantService.register(merchantNo, accountId, dto);

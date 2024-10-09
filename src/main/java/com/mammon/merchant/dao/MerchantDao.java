@@ -101,4 +101,20 @@ public class MerchantDao {
         RowMapper<MerchantEntity> rowMapper = new BeanPropertyRowMapper<>(MerchantEntity.class);
         return namedParameterJdbcTemplate.query(sql, params, rowMapper);
     }
+
+    public boolean existsMerchantNo(long merchantNo) {
+        MapSqlParameterSource params = new MapSqlParameterSource();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT 1 FROM  m_merchant where merchant_no = :merchantNo limit 1");
+
+        params.addValue("merchantNo", merchantNo);
+
+        String sql = sb.toString();
+
+        RowMapper<Integer> rowMapper = new BeanPropertyRowMapper<>(Integer.class);
+        List<Integer> list = namedParameterJdbcTemplate.query(sql, params, rowMapper);
+        Integer limit = list.stream().findFirst().orElse(null);
+        return limit != null;
+    }
 }
