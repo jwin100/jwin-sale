@@ -1,5 +1,6 @@
 package com.mammon.auth.service;
 
+import com.mammon.auth.channel.factory.TradeChannelCode;
 import com.mammon.auth.channel.factory.TradeOpenChannel;
 import com.mammon.auth.channel.factory.TradeOpenFactory;
 import com.mammon.auth.domain.UserDetail;
@@ -183,6 +184,7 @@ public class AuthService {
         if (channel == null) {
             throw new CustomException("登录信息错误");
         }
+        int source = getMiniAppLoginSource(channelCode, dto.getSource());
         String openId = channel.getOpenId(dto.getCode());
         if (StringUtils.isBlank(openId)) {
             throw new CustomException("微信登录异常，请使用其他方式登录");
@@ -199,7 +201,7 @@ public class AuthService {
         UserDetail userDetail = userDetailsServiceImpl.loadUserByPhone(account.getPhone());
         validAccount(userDetail);
         vo.setCode(WechatLoginStatus.LOGIN_SUCCESS.getCode());
-        miniappLogin(request, vo, userDetail.getId(), dto.getSource());
+        miniappLogin(request, vo, userDetail.getId(), source);
         return vo;
     }
 
@@ -208,26 +210,37 @@ public class AuthService {
         if (channel == null) {
             throw new CustomException("登录信息错误");
         }
+        int source = getMiniAppLoginSource(channelCode, dto.getSource());
         String phone = channel.getPhoneNumber(dto.getCode());
         // 根据手机号查用户是否存在
         AccountEntity account = accountService.findByPhone(phone);
         if (account != null) {
             // 修改入openId
             accountService.editOpenId(account.getId(), dto.getOpenId());
-            return miniappLogin(request, dto.getOpenId(), phone, dto.getSource());
+            return miniappLogin(request, dto.getOpenId(), phone, source);
         }
         // 否则根据openId查用户是否存在
         account = accountService.findByOpenId(dto.getOpenId());
         if (account != null) {
-            return miniappLogin(request, dto.getOpenId(), phone, dto.getSource());
+            return miniappLogin(request, dto.getOpenId(), phone, source);
         }
         // 否则注册新账号并登录
         RegisterDto registerDto = new RegisterDto();
         registerDto.setPhone(phone);
         registerDto.setOpenId(dto.getOpenId());
-        registerDto.setSource(dto.getSource());
+        registerDto.setSource(source);
         generateService.register(registerDto);
-        return miniappLogin(request, dto.getOpenId(), phone, dto.getSource());
+        return miniappLogin(request, dto.getOpenId(), phone, source);
+    }
+
+    private int getMiniAppLoginSource(String channelCode, int source) {
+        if (source > 0) {
+            return source;
+        }
+        if (TradeChannelCode.WECHAT.getCode().equals(channelCode)) {
+            return CommonLoginSource.WX_AMP.getCode();
+        }
+        return 0;
     }
 
     private MiniAppLoginVo miniappLogin(HttpServletRequest request, String openId, String phone, int source) {
