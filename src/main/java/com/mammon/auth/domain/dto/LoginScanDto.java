@@ -10,7 +10,7 @@ import lombok.Data;
 public class LoginScanDto {
 
     /**
-     * 请求来源（1：wechat）
+     * 请求来源（5：微信端扫码登录）
      */
     private int source;
 }

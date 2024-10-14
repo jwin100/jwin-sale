@@ -1,7 +1,5 @@
 package com.mammon.auth.service;
 
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.crypto.SecureUtil;
 import com.mammon.auth.channel.factory.TradeOpenChannel;
 import com.mammon.auth.channel.factory.TradeOpenFactory;
 import com.mammon.auth.domain.UserDetail;
@@ -253,7 +251,7 @@ public class AuthService {
     public AuthScanVo scan(LoginScanDto dto) {
         // 看着没传，先写一个兜底
         if (dto.getSource() == 0) {
-            dto.setSource(1);
+            dto.setSource(5);
         }
         String id = accountScanService.save(dto.getSource());
         String url = String.format("%s?scanId=%s", SCAN_PATH, id);
@@ -281,21 +279,10 @@ public class AuthService {
         UserDetail userDetail = userDetailsServiceImpl.loadUserById(accountId);
         validAccount(userDetail);
         LoginVo vo = new LoginVo();
-        int scanLoginSource = getScanLoginSource(scan.getSource());
-        login(request, vo, userDetail.getId(), scanLoginSource);
+        login(request, vo, userDetail.getId(), scan.getSource());
         // 登录信息存入扫码表
         String loginInfo = JsonUtil.toJSONString(vo);
         accountScanService.editLoginInfo(scanId, loginInfo);
-    }
-
-    private int getScanLoginSource(int scanSource) {
-        switch (scanSource) {
-            case 0:
-                return CommonLoginSource.WX_AMP_SCAN.getCode();
-            default:
-                log.warn("扫码登录没有解析出登录来源,source:{}", scanSource);
-                return 0;
-        }
     }
 
     public void editScanScanned(String id) {
