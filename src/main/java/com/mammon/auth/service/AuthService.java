@@ -251,6 +251,10 @@ public class AuthService {
     }
 
     public AuthScanVo scan(LoginScanDto dto) {
+        // 看着没传，先写一个兜底
+        if (dto.getSource() == 0) {
+            dto.setSource(1);
+        }
         String id = accountScanService.save(dto.getSource());
         String url = String.format("%s?scanId=%s", SCAN_PATH, id);
         String qrCode = QrCodeUtil.getBase64QRCode(url);
