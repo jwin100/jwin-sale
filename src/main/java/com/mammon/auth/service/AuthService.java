@@ -260,6 +260,13 @@ public class AuthService {
         return vo;
     }
 
+    /**
+     * 扫码登录
+     *
+     * @param request
+     * @param accountId
+     * @param scanId
+     */
     @Transactional(rollbackFor = Exception.class)
     public void scanLogin(HttpServletRequest request, String accountId, String scanId) {
         AccountScanEntity scan = accountScanService.findById(scanId);
@@ -270,10 +277,21 @@ public class AuthService {
         UserDetail userDetail = userDetailsServiceImpl.loadUserById(accountId);
         validAccount(userDetail);
         LoginVo vo = new LoginVo();
-        login(request, vo, userDetail.getId(), CommonLoginSource.ADMIN.getCode());
+        int scanLoginSource = getScanLoginSource(scan.getSource());
+        login(request, vo, userDetail.getId(), scanLoginSource);
         // 登录信息存入扫码表
         String loginInfo = JsonUtil.toJSONString(vo);
         accountScanService.editLoginInfo(scanId, loginInfo);
+    }
+
+    private int getScanLoginSource(int scanSource) {
+        switch (scanSource) {
+            case 0:
+                return CommonLoginSource.WX_AMP_SCAN.getCode();
+            default:
+                log.warn("扫码登录没有解析出登录来源,source:{}", scanSource);
+                return 0;
+        }
     }
 
     public void editScanScanned(String id) {
