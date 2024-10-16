@@ -455,7 +455,7 @@ public class CashierRefundTradeService {
             // 批量退货入库，（有仅仅退款不退货的情况，这种情况从库存走报废，报废原因）
             batchReplenish(refund.getMerchantNo(), refund.getStoreNo(), refund.getSkus());
         }
-        if (StringUtils.isNotBlank(refund.getMemberId())) {
+        if (StringUtils.isNotBlank(refund.getMemberId()) && refund.getIntegral() != 0) {
             // 退积分
             memberAssetsService.removeIntegral(refund.getMerchantNo(), refund.getMemberId(), refund.getRefundNo(),
                     refund.getIntegral(), "消费退款退积分");

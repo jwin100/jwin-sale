@@ -8,7 +8,7 @@ import com.mammon.auth.domain.vo.*;
 import com.mammon.auth.service.SmsCaptchaService;
 import com.mammon.common.ResultJson;
 import com.mammon.auth.service.AuthService;
-import com.mammon.merchant.service.MerchantNoGenerate;
+import com.mammon.leaf.service.MerchantCodeGenerate;
 import com.mammon.sms.enums.SmsTempTypeEnum;
 import com.mammon.utils.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import javax.annotation.Detainted;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 
@@ -32,7 +31,7 @@ public class LoginController {
     @Resource
     private SmsCaptchaService smsCaptchaService;
     @Autowired
-    private MerchantNoGenerate merchantNoGenerate;
+    private MerchantCodeGenerate merchantCodeGenerate;
 
     /**
      * 发送短信验证码

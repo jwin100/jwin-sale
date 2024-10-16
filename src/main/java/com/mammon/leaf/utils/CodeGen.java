@@ -1,4 +1,4 @@
-package com.mammon.merchant.utils;
+package com.mammon.leaf.utils;
 
 import org.apache.commons.lang3.StringUtils;
 

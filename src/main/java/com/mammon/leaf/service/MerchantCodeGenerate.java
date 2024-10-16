@@ -1,8 +1,8 @@
-package com.mammon.merchant.service;
+package com.mammon.leaf.service;
 
 import com.mammon.merchant.dao.MerchantDao;
-import com.mammon.merchant.dao.MerchantNoSequenceDao;
-import com.mammon.merchant.utils.CodeGen;
+import com.mammon.leaf.dao.MerchantCodeSeqDao;
+import com.mammon.leaf.utils.CodeGen;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -12,17 +12,17 @@ import javax.annotation.Resource;
  * @since 2024/10/9 23:21
  */
 @Service
-public class MerchantNoGenerate {
+public class MerchantCodeGenerate {
 
     @Resource
-    private MerchantNoSequenceDao merchantNoSequenceDao;
+    private MerchantCodeSeqDao merchantCodeSeqDao;
 
     @Resource
     private MerchantDao merchantDao;
 
     public long create() {
         do {
-            long seqNo = merchantNoSequenceDao.next();
+            long seqNo = merchantCodeSeqDao.next();
             long code = Long.parseLong(CodeGen.convert(seqNo));
             if (!merchantDao.existsMerchantNo(code)) {
                 return code;

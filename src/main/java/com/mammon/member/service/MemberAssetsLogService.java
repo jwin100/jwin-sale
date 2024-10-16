@@ -4,6 +4,7 @@ import com.mammon.common.Generate;
 import com.mammon.common.PageResult;
 import com.mammon.common.PageVo;
 import com.mammon.member.dao.MemberAssetsLogDao;
+import com.mammon.member.domain.dto.MemberAssetsLogDto;
 import com.mammon.member.domain.query.MemberAssetsLogQuery;
 import com.mammon.member.domain.entity.MemberAssetsLogEntity;
 import com.mammon.member.domain.entity.MemberEntity;
@@ -31,18 +32,17 @@ public class MemberAssetsLogService {
     @Resource
     private MemberService memberService;
 
-    public void create(String memberId, int type, int category, String orderNo,
-                       long beforeAssets, long changeAssets, long afterAssets, String remark) {
+    public void create(MemberAssetsLogDto dto) {
         MemberAssetsLogEntity entity = new MemberAssetsLogEntity();
         entity.setId(Generate.generateUUID());
-        entity.setMemberId(memberId);
-        entity.setOrderNo(orderNo);
-        entity.setType(type);
-        entity.setCategory(category);
-        entity.setBeforeAssets(beforeAssets);
-        entity.setChangeAssets(changeAssets);
-        entity.setAfterAssets(afterAssets);
-        entity.setRemark(remark);
+        entity.setMemberId(dto.getMemberId());
+        entity.setOrderNo(dto.getOrderNo());
+        entity.setType(dto.getType());
+        entity.setCategory(dto.getCategory());
+        entity.setBeforeAssets(dto.getBeforeAssets());
+        entity.setChangeAssets(dto.getChangeAssets());
+        entity.setAfterAssets(dto.getAfterAssets());
+        entity.setRemark(dto.getRemark());
         entity.setCreateTime(LocalDateTime.now());
         memberAssetsLogDao.save(entity);
     }

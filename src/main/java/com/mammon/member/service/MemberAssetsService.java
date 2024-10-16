@@ -6,6 +6,7 @@ import com.mammon.market.domain.vo.MarketRechargeRuleVo;
 import com.mammon.market.service.MarketRechargeRuleService;
 import com.mammon.member.dao.MemberAssetsDao;
 import com.mammon.member.domain.dto.MemberAssetsConsumeDto;
+import com.mammon.member.domain.dto.MemberAssetsLogDto;
 import com.mammon.member.domain.dto.MemberRechargeOrderDto;
 import com.mammon.member.domain.entity.MemberAssetsEntity;
 import com.mammon.member.domain.enums.MemberAssetsCategory;
@@ -82,9 +83,17 @@ public class MemberAssetsService {
         entity.setUpdateTime(LocalDateTime.now());
         memberAssetsDao.save(entity);
         if (addRecharge > 0) {
-            memberAssetsLogService.create(id, MemberAssetsCategory.RECHARGE_ORDER.getCode(),
-                    MemberAssetsLogType.CHANGE_RECHARGE.getCode(),
-                    null, 0, addRecharge, entity.getNowRecharge(), "会员储值");
+            // 积分变更记录
+            MemberAssetsLogDto dto = new MemberAssetsLogDto();
+            dto.setMemberId(id);
+            dto.setType(MemberAssetsLogType.CHANGE_RECHARGE.getCode());
+            dto.setCategory(MemberAssetsCategory.RECHARGE_ORDER.getCode());
+            dto.setOrderNo(null);
+            dto.setBeforeAssets(0);
+            dto.setChangeAssets(addIntegral);
+            dto.setAfterAssets(entity.getNowRecharge());
+            dto.setRemark("会员储值");
+            memberAssetsLogService.create(dto);
         }
         if (addIntegral > 0) {
             this.addIntegral(merchantNo, id, null, addIntegral, "开卡赠送");
@@ -133,10 +142,16 @@ public class MemberAssetsService {
         rechargeOrderDto.setRechargeTime(LocalDateTime.now());
         memberRechargeOrderService.create(merchantNo, storeNo, rechargeOrderDto);
 
-        // 储值日志
-        memberAssetsLogService.create(memberId, MemberAssetsCategory.RECHARGE_ORDER.getCode(),
-                MemberAssetsLogType.CHANGE_RECHARGE.getCode(),
-                orderNo, beforeRecharge, addRecharge, afterRecharge, "会员充值");
+        MemberAssetsLogDto dto = new MemberAssetsLogDto();
+        dto.setMemberId(memberId);
+        dto.setType(MemberAssetsLogType.CHANGE_RECHARGE.getCode());
+        dto.setCategory(MemberAssetsCategory.RECHARGE_ORDER.getCode());
+        dto.setOrderNo(orderNo);
+        dto.setBeforeAssets(beforeRecharge);
+        dto.setChangeAssets(addRecharge);
+        dto.setAfterAssets(afterRecharge);
+        dto.setRemark("会员储值");
+        memberAssetsLogService.create(dto);
         // 事务提交后执行
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
@@ -178,9 +193,16 @@ public class MemberAssetsService {
         memberRechargeOrderService.refund(merchantNo, orderNo, LocalDateTime.now());
 
         // 记录退储值日志
-        memberAssetsLogService.create(memberId, MemberAssetsCategory.RECHARGE_REFUND.getCode(),
-                MemberAssetsLogType.CHANGE_RECHARGE.getCode(),
-                refundNo, beforeAssets, -addRecharge, afterAssets, "会员充值退款");
+        MemberAssetsLogDto dto = new MemberAssetsLogDto();
+        dto.setMemberId(memberId);
+        dto.setType(MemberAssetsLogType.CHANGE_RECHARGE.getCode());
+        dto.setCategory(MemberAssetsCategory.RECHARGE_REFUND.getCode());
+        dto.setOrderNo(refundNo);
+        dto.setBeforeAssets(beforeAssets);
+        dto.setChangeAssets(-addRecharge);
+        dto.setAfterAssets(afterAssets);
+        dto.setRemark("会员储值退款");
+        memberAssetsLogService.create(dto);
     }
 
     /**
@@ -219,10 +241,17 @@ public class MemberAssetsService {
         setRecharge(entity, assetsCategory, dto.getChangeAmount());
         memberAssetsDao.updateRecharge(entity);
         // 储值日志
-        memberAssetsLogService.create(dto.getMemberId(),
-                MemberAssetsCategory.CASHIER_ORDER.getCode(),
-                MemberAssetsLogType.CHANGE_RECHARGE.getCode(),
-                dto.getOrderNo(), beforeRecharge, dto.getChangeAmount(), entity.getNowRecharge(), "储值余额变更");
+        MemberAssetsLogDto assetsLogDto = new MemberAssetsLogDto();
+        assetsLogDto.setMemberId(dto.getMemberId());
+        assetsLogDto.setType(MemberAssetsLogType.CHANGE_RECHARGE.getCode());
+        assetsLogDto.setCategory(MemberAssetsCategory.CASHIER_ORDER.getCode());
+        assetsLogDto.setOrderNo(dto.getOrderNo());
+        assetsLogDto.setBeforeAssets(beforeRecharge);
+        assetsLogDto.setChangeAssets(dto.getChangeAmount());
+        assetsLogDto.setAfterAssets(entity.getNowRecharge());
+        assetsLogDto.setRemark("储值余额变更");
+        memberAssetsLogService.create(assetsLogDto);
+
         // 事务提交后执行
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
@@ -276,10 +305,17 @@ public class MemberAssetsService {
         entity.setUpdateTime(LocalDateTime.now());
         memberAssetsDao.updateIntegral(entity);
 
-        // 储值日志
-        memberAssetsLogService.create(id, MemberAssetsCategory.INTEGRAL_ADD.getCode(),
-                MemberAssetsLogType.CHANGE_INTEGRAL.getCode(),
-                orderNo, beforeIntegral, addIntegral, nowIntegral, remark);
+        // 积分变更记录
+        MemberAssetsLogDto dto = new MemberAssetsLogDto();
+        dto.setMemberId(id);
+        dto.setType(MemberAssetsLogType.CHANGE_INTEGRAL.getCode());
+        dto.setCategory(MemberAssetsCategory.INTEGRAL_ADD.getCode());
+        dto.setOrderNo(orderNo);
+        dto.setBeforeAssets(beforeIntegral);
+        dto.setChangeAssets(addIntegral);
+        dto.setAfterAssets(nowIntegral);
+        dto.setRemark(remark);
+        memberAssetsLogService.create(dto);
 
         memberService.syncMemberLevel(merchantNo, id);
     }
@@ -305,9 +341,16 @@ public class MemberAssetsService {
         memberAssetsDao.updateIntegral(entity);
 
         // 储值日志
-        memberAssetsLogService.create(id, MemberAssetsCategory.INTEGRAL_REMOVE.getCode(),
-                MemberAssetsLogType.CHANGE_INTEGRAL.getCode(),
-                orderNo, beforeIntegral, -removeIntegral, afterIntegral, remark);
+        MemberAssetsLogDto assetsLogDto = new MemberAssetsLogDto();
+        assetsLogDto.setMemberId(id);
+        assetsLogDto.setType(MemberAssetsLogType.CHANGE_INTEGRAL.getCode());
+        assetsLogDto.setCategory(MemberAssetsCategory.INTEGRAL_REMOVE.getCode());
+        assetsLogDto.setOrderNo(orderNo);
+        assetsLogDto.setBeforeAssets(beforeIntegral);
+        assetsLogDto.setChangeAssets(-removeIntegral);
+        assetsLogDto.setAfterAssets(afterIntegral);
+        assetsLogDto.setRemark(remark);
+        memberAssetsLogService.create(assetsLogDto);
 
         memberService.syncMemberLevel(merchantNo, id);
     }

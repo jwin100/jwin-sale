@@ -1,4 +1,4 @@
-package com.mammon.merchant.dao;
+package com.mammon.leaf.dao;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -11,7 +11,7 @@ import java.util.List;
  * @since 2024/10/9 23:20
  */
 @Repository
-public class MerchantNoSequenceDao {
+public class MerchantCodeSeqDao {
 
     private static final String SEQ_NAME = "merchant_code_gen_num";
     private static final long DEFAULT_START_SEQ_NO = 123049131;
