@@ -1,6 +1,7 @@
 package com.mammon.chain.dao;
 
 import com.mammon.chain.domain.entity.ChainEntity;
+import com.mammon.config.ChainDataSourceConfig;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
@@ -19,13 +20,13 @@ import java.util.List;
 @Repository
 public class ChainDao {
 
-    @Resource
+    @Resource(name = ChainDataSourceConfig.ChainDbNamedParameterJdbcTemplateName)
     private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
     public int save(ChainEntity entity) {
 
         StringBuilder sb = new StringBuilder();
-        sb.append("INSERT INTO chain.t_chain (")
+        sb.append("INSERT INTO t_chain (")
                 .append(" id, code, url, link, status, create_time, update_time ")
                 .append(" ) VALUES ( ")
                 .append(" :id, :code, :url, :link, :status, :createTime, :updateTime ")
@@ -42,7 +43,7 @@ public class ChainDao {
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT ")
                 .append(" * ")
-                .append(" FROM  chain.t_chain ")
+                .append(" FROM  t_chain ")
                 .append(" WHERE code = :code ");
 
         params.addValue("code", code);

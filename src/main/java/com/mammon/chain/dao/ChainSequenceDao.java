@@ -1,5 +1,6 @@
 package com.mammon.chain.dao;
 
+import com.mammon.config.ChainDataSourceConfig;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -13,10 +14,10 @@ import java.util.List;
 @Repository
 public class ChainSequenceDao {
 
-    private static final String SEQ_NAME = "chain.chain_links_gen_num";
+    private static final String SEQ_NAME = "chain_links_gen_num";
     private static final long DEFAULT_START_SEQ_NO = 111;
 
-    @Resource
+    @Resource(name = ChainDataSourceConfig.ChainDbJdbcTemplateName)
     private JdbcTemplate jdbcTemplate;
 
     public long reset(long startSeqNo) {
