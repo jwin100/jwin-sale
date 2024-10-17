@@ -112,6 +112,22 @@ public class SkuSpecDao {
         return namedParameterJdbcTemplate.query(sql, params, rowMapper);
     }
 
+    public List<SkuSpecEntity> findAllBySkuId(String skuId) {
+        MapSqlParameterSource params = new MapSqlParameterSource();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT ")
+                .append(" * ")
+                .append(" FROM  m_goods_sku_spec ")
+                .append(" where sku_id = :skuId ");
+        params.addValue("skuId", skuId);
+
+        String sql = sb.toString();
+
+        RowMapper<SkuSpecEntity> rowMapper = new BeanPropertyRowMapper<>(SkuSpecEntity.class);
+        return namedParameterJdbcTemplate.query(sql, params, rowMapper);
+    }
+
     public List<SkuSpecEntity> findAllBySkuIds(List<String> skuIds) {
         MapSqlParameterSource params = new MapSqlParameterSource();
 

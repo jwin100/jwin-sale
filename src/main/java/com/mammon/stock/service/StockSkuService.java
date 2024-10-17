@@ -313,6 +313,10 @@ public class StockSkuService {
         return stockSkus.stream().map(this::convertStockSku).collect(Collectors.toList());
     }
 
+    public List<StockSkuEntity> findListBySkuId(String skuId) {
+        return stockSkuDao.findListBySkuId(skuId);
+    }
+
     /**
      * 根据商户编号、门店编号、SPU ID和库存分配查询条件查询库存SKU分配列表
      *

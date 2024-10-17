@@ -5,7 +5,9 @@ import com.mammon.enums.CommonStatus;
 import com.mammon.exception.CustomException;
 import com.mammon.goods.dao.SkuDao;
 import com.mammon.goods.domain.dto.SkuDto;
+import com.mammon.goods.domain.dto.SkuSpecDto;
 import com.mammon.goods.domain.entity.SkuEntity;
+import com.mammon.goods.domain.entity.SkuSpecEntity;
 import com.mammon.goods.domain.vo.SkuSpecVo;
 import com.mammon.goods.domain.vo.SkuVo;
 import com.mammon.goods.domain.vo.SpuBaseVo;
@@ -25,6 +27,7 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -81,6 +84,12 @@ public class SkuService {
             dto.setSkuNo(dto.getSkuCode());
         }
 
+        // 多规格商品，选中规格值组合后根据此字段进行筛选
+        String joinSpec = dto.getSpecs().stream()
+                .map(SkuSpecDto::getSpecValueId)
+                .sorted(Comparator.comparing(x -> x))
+                .collect(Collectors.joining("_"));
+
         SkuEntity entity = new SkuEntity();
         BeanUtils.copyProperties(dto, entity);
         entity.setId(Generate.generateUUID());
@@ -91,6 +100,7 @@ public class SkuService {
         entity.setStatus(CommonStatus.ENABLED.getCode());
         entity.setCreateTime(LocalDateTime.now());
         entity.setUpdateTime(LocalDateTime.now());
+        entity.setJoinSpec(joinSpec);
         skuDao.save(entity);
         if (!CollectionUtils.isEmpty(dto.getSpecs())) {
             skuSpecService.batchSave(spuId, entity.getId(), dto.getSpecs());
@@ -108,12 +118,20 @@ public class SkuService {
         if (sku == null) {
             throw new CustomException("商品规格信息错误");
         }
+
+        // 多规格商品，选中规格值组合后根据此字段进行筛选
+        String joinSpec = dto.getSpecs().stream()
+                .map(SkuSpecDto::getSpecValueId)
+                .sorted(Comparator.comparing(x -> x))
+                .collect(Collectors.joining("_"));
+
         SkuEntity entity = new SkuEntity();
         BeanUtils.copyProperties(dto, entity);
         entity.setUpdateTime(LocalDateTime.now());
         entity.setPurchaseAmount(AmountUtil.parse(dto.getPurchaseAmount()));
         entity.setReferenceAmount(AmountUtil.parse(dto.getReferenceAmount()));
         entity.setSkuWeight(QuantityUtil.parse(dto.getSkuWeight()));
+        entity.setJoinSpec(joinSpec);
         skuDao.update(entity);
 
         StockSkuDto stockSkuDto = new StockSkuDto();
@@ -153,6 +171,10 @@ public class SkuService {
     public List<SkuVo> findAllBySpuId(String spuId) {
         List<SkuEntity> skus = skuDao.findAllBySpuId(spuId);
         return convertList(skus);
+    }
+
+    public List<SkuEntity> findAll() {
+        return skuDao.findAll();
     }
 
     private SkuVo convertInfo(SpuBaseVo spu, SkuEntity sku) {

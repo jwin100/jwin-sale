@@ -47,6 +47,8 @@ public class StockSkuDto {
      */
     private long sellStock;
 
+    private String joinSpec;
+
     /**
      * 状态
      */

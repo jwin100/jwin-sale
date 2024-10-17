@@ -4,6 +4,7 @@ import com.mammon.common.Generate;
 import com.mammon.common.PageResult;
 import com.mammon.common.PageVo;
 import com.mammon.enums.CommonStatus;
+import com.mammon.goods.dao.SkuSpecDao;
 import com.mammon.goods.domain.entity.CategoryEntity;
 import com.mammon.goods.domain.entity.UnitEntity;
 import com.mammon.goods.domain.enums.CategoryLevel;
@@ -39,6 +40,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -66,6 +68,8 @@ public class StockSpuService {
 
     @Resource
     private UnitService unitService;
+    @Autowired
+    private SkuSpecDao skuSpecDao;
 
     /**
      * 同步商品信息到各门店
@@ -340,6 +344,7 @@ public class StockSpuService {
         List<String> spuIds = spuVos.stream().map(StockSpuEntity::getSpuId).collect(Collectors.toList());
         List<StockSkuEntity> stockSkuList = stockSkuService.findListByStockSpuIds(stockSpuIds);
         List<SkuSpecVo> specVos = skuSpecService.findAllBySpuIds(spuIds);
+
         return spuVos.stream().map(x -> {
             UnitEntity unit = unitService.findById(merchantNo, x.getUnitId());
 
@@ -353,11 +358,12 @@ public class StockSpuService {
                     .filter(stock -> stock.getSpuId().equals(x.getSpuId()))
                     .mapToLong(StockSkuEntity::getSellStock).sum();
             vo.setSellStock(StockUtil.parseBigDecimal(sellStock));
-            vo.setSpecs(
-                    specVos.stream()
-                            .filter(spec -> spec.getSpuId().equals(x.getSpuId()))
-                            .count()
-            );
+
+            List<SkuSpecVo> tempSpecVos = specVos.stream()
+                    .filter(spec -> spec.getSpuId().equals(x.getSpuId())).collect(Collectors.toList());
+            vo.setSpecs(tempSpecVos.size());
+            vo.setSkuSpecs(getSkuSpec(tempSpecVos));
+
             // 零售价
             stockSkuList.stream().filter(sku -> sku.getSpuId().equals(x.getSpuId()))
                     .findFirst()
@@ -373,5 +379,34 @@ public class StockSpuService {
             }
             return vo;
         }).collect(Collectors.toList());
+    }
+
+    private List<StockSkuSpecVo> getSkuSpec(List<SkuSpecVo> tempSpecVos) {
+        if (CollectionUtils.isEmpty(tempSpecVos)) {
+            return Collections.emptyList();
+        }
+        List<StockSkuSpecVo> skuSpecVos = new ArrayList<>();
+        tempSpecVos.forEach(y -> {
+            if (skuSpecVos.stream().noneMatch(z -> z.getSpecId().equals(y.getSpecId()))) {
+                StockSkuSpecVo skuSpecVo = new StockSkuSpecVo();
+                skuSpecVo.setSpecId(y.getSpecId());
+                skuSpecVo.setSpecName(y.getSpecName());
+
+                List<SkuSpecVo> tempSkuSpecValueVos = tempSpecVos.stream().filter(spec -> spec.getSpecId().equals(y.getSpecId()))
+                        .collect(Collectors.toList());
+                List<StockSkuSpecValueVo> skuSpecValueVos = new ArrayList<>();
+                tempSkuSpecValueVos.forEach(value -> {
+                    if (skuSpecValueVos.stream().noneMatch(z -> z.getSpecValueId().equals(value.getSpecValueId()))) {
+                        StockSkuSpecValueVo skuSpecValueVo = new StockSkuSpecValueVo();
+                        skuSpecValueVo.setSpecValueId(value.getSpecValueId());
+                        skuSpecValueVo.setSpecValueName(value.getSpecValueName());
+                        skuSpecValueVos.add(skuSpecValueVo);
+                    }
+                });
+                skuSpecVo.setSpecValues(skuSpecValueVos);
+                skuSpecVos.add(skuSpecVo);
+            }
+        });
+        return skuSpecVos;
     }
 }

@@ -95,4 +95,10 @@ public class SpuController {
         PageVo<SpuListVo> result = spuService.page(merchantNo, query);
         return ResultJson.ok(result);
     }
+
+    @PutMapping("/repair-specs")
+    public ResultJson<Void> repairSpec() {
+        spuService.repairSpec();
+        return ResultJson.ok();
+    }
 }

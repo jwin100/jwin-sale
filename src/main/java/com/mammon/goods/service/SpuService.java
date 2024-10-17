@@ -1,9 +1,11 @@
 package com.mammon.goods.service;
 
+import cn.hutool.core.collection.CollUtil;
 import com.mammon.common.Generate;
 import com.mammon.common.PageVo;
 import com.mammon.enums.CommonStatus;
 import com.mammon.enums.IEnum;
+import com.mammon.goods.dao.SkuDao;
 import com.mammon.goods.dao.SpuDao;
 import com.mammon.goods.domain.dto.*;
 import com.mammon.goods.domain.entity.*;
@@ -19,8 +21,12 @@ import com.mammon.goods.domain.query.SpuQuery;
 import com.mammon.leaf.service.LeafCodeService;
 import com.mammon.merchant.domain.entity.MerchantStoreEntity;
 import com.mammon.merchant.service.MerchantStoreService;
+import com.mammon.stock.dao.StockSkuDao;
 import com.mammon.stock.domain.dto.StockSkuDto;
 import com.mammon.stock.domain.dto.StockSpuDto;
+import com.mammon.stock.domain.entity.StockSkuEntity;
+import com.mammon.stock.domain.vo.StockSkuVo;
+import com.mammon.stock.service.StockSkuService;
 import com.mammon.stock.service.StockSpuService;
 import com.mammon.utils.AmountUtil;
 import com.mammon.utils.ExcelUtils;
@@ -28,6 +34,7 @@ import com.mammon.utils.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -71,6 +78,12 @@ public class SpuService {
 
     @Resource
     private StockSpuService stockSpuService;
+    @Autowired
+    private SkuDao skuDao;
+    @Autowired
+    private StockSkuService stockSkuService;
+    @Autowired
+    private StockSkuDao stockSkuDao;
 
     @Transactional(rollbackFor = Exception.class)
     public void create(long merchantNo, String accountId, SpuDto dto) {
@@ -353,6 +366,28 @@ public class SpuService {
             return Collections.emptyList();
         }
         return convertList(merchantNo, spus);
+    }
+
+    public void repairSpec() {
+        List<SkuEntity> skus = skuService.findAll();
+        skus.forEach(sku -> {
+            List<SkuSpecVo> skuSpecs = skuSpecService.findAllBySkuId(sku.getId());
+            if (CollUtil.isNotEmpty(skuSpecs)) {
+                String joinSpec = skuSpecs.stream()
+                        .map(SkuSpecVo::getSpecValueId)
+                        .sorted(Comparator.comparing(x -> x))
+                        .collect(Collectors.joining("_"));
+
+                sku.setJoinSpec(joinSpec);
+                skuDao.update(sku);
+
+                List<StockSkuEntity> stockSkuVos = stockSkuService.findListBySkuId(sku.getId());
+                stockSkuVos.forEach(stockSku -> {
+                    stockSku.setJoinSpec(joinSpec);
+                    stockSkuDao.edit(stockSku);
+                });
+            }
+        });
     }
 
     private List<String> convertCategoryIds(long merchantNo, List<String> categoryIds, String categoryId) {

@@ -57,6 +57,8 @@ public class StockSkuEntity {
      */
     private long sellStock;
 
+    private String joinSpec;
+
     /**
      * 商品状态(上架，下架)
      */

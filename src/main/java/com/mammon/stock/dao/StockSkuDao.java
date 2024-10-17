@@ -26,10 +26,10 @@ public class StockSkuDao {
         StringBuilder sb = new StringBuilder();
         sb.append("INSERT INTO m_stock_sku (")
                 .append(" id, stock_spu_id, merchant_no, store_no, spu_id, sku_id, sku_code, sku_no, sku_name, ")
-                .append(" purchase_amount, reference_amount, sku_weight, sell_stock, status, create_time, update_time ")
+                .append(" purchase_amount, reference_amount, sku_weight, sell_stock, status, create_time, update_time, join_spec ")
                 .append(" ) VALUES ( ")
                 .append(" :id, :stockSpuId, :merchantNo, :storeNo, :spuId, :skuId, :skuCode, :skuNo, :skuName, ")
-                .append(" :purchaseAmount, :referenceAmount, :skuWeight, :sellStock, :status, :createTime, :updateTime ")
+                .append(" :purchaseAmount, :referenceAmount, :skuWeight, :sellStock, :status, :createTime, :updateTime, :joinSpec ")
                 .append(" ) ");
 
         String sql = sb.toString();
@@ -48,6 +48,7 @@ public class StockSkuDao {
                 .append(" purchase_amount = :purchaseAmount, ")
                 .append(" reference_amount = :referenceAmount, ")
                 .append(" sku_weight = :skuWeight, ")
+                .append(" join_spec = :joinSpec, ")
                 .append(" status = :status, ")
                 .append(" update_time = :updateTime ")
                 .append(" where id = :id ");
@@ -224,6 +225,22 @@ public class StockSkuDao {
         RowMapper<StockSkuEntity> rowMapper = new BeanPropertyRowMapper<>(StockSkuEntity.class);
         List<StockSkuEntity> list = namedParameterJdbcTemplate.query(sql, params, rowMapper);
         return list.stream().findFirst().orElse(null);
+    }
+
+    public List<StockSkuEntity> findListBySkuId(String skuId) {
+        MapSqlParameterSource params = new MapSqlParameterSource();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT ")
+                .append(" * ")
+                .append(" FROM  m_stock_sku ")
+                .append(" WHERE sku_id = :skuId ");
+        params.addValue("skuId", skuId);
+
+        String sql = sb.toString();
+
+        RowMapper<StockSkuEntity> rowMapper = new BeanPropertyRowMapper<>(StockSkuEntity.class);
+        return namedParameterJdbcTemplate.query(sql, params, rowMapper);
     }
 
     public List<StockSkuEntity> findListBySkuIds(long merchantNo, long storeNo, List<String> skuIds) {

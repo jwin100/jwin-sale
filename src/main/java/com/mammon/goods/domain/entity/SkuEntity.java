@@ -45,6 +45,11 @@ public class SkuEntity {
     private long skuWeight;
 
     /**
+     * 拼接后的specValueId
+     */
+    private String joinSpec;
+
+    /**
      * 商品状态(上架，下架)
      */
     private int status;

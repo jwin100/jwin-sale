@@ -36,10 +36,13 @@ public class SkuSpecService {
 
     public void save(String spuId, String skuId, SkuSpecDto dto) {
         SkuSpecEntity entity = new SkuSpecEntity();
-        BeanUtils.copyProperties(dto, entity);
         entity.setId(Generate.generateUUID());
         entity.setSpuId(spuId);
         entity.setSkuId(skuId);
+        entity.setSpecId(dto.getSpecId());
+        entity.setSpecName(dto.getSpecName());
+        entity.setSpecValueId(dto.getSpecValueId());
+        entity.setSpecValueName(dto.getSpecValueName());
         entity.setStatus(CommonStatus.ENABLED.getCode());
         entity.setCreateTime(LocalDateTime.now());
         entity.setUpdateTime(LocalDateTime.now());
@@ -63,7 +66,19 @@ public class SkuSpecService {
         }).collect(Collectors.toList());
     }
 
+    public List<SkuSpecVo> findAllBySkuId(String skuId) {
+        List<SkuSpecEntity> list = skuSpecDao.findAllBySkuId(skuId);
+        return list.stream().map(x -> {
+            SkuSpecVo vo = new SkuSpecVo();
+            BeanUtils.copyProperties(x, vo);
+            return vo;
+        }).collect(Collectors.toList());
+    }
+
     public List<SkuSpecVo> findAllBySkuIds(List<String> skuIds) {
+        if (CollectionUtils.isEmpty(skuIds)) {
+            return Collections.emptyList();
+        }
         List<SkuSpecEntity> list = skuSpecDao.findAllBySkuIds(skuIds);
         return list.stream().map(x -> {
             SkuSpecVo vo = new SkuSpecVo();

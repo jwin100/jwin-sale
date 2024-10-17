@@ -23,10 +23,10 @@ public class SkuDao {
         StringBuilder sb = new StringBuilder();
         sb.append("INSERT INTO m_goods_sku (")
                 .append(" id, spu_id, sku_code, sku_no, sku_name, purchase_amount, reference_amount, sku_weight, status, ")
-                .append(" create_time, update_time ")
+                .append(" create_time, update_time, join_spec ")
                 .append(" ) VALUES ( ")
                 .append(" :id, :spuId, :skuCode, :skuNo, :skuName, :purchaseAmount, :referenceAmount, :skuWeight, :status, ")
-                .append(" :createTime, :updateTime ")
+                .append(" :createTime, :updateTime, :joinSpec ")
                 .append(" ) ");
 
         String sql = sb.toString();
@@ -45,6 +45,7 @@ public class SkuDao {
                 .append(" purchase_amount = :purchaseAmount, ")
                 .append(" reference_amount = :referenceAmount, ")
                 .append(" sku_weight = :skuWeight, ")
+                .append(" join_spec = :joinSpec, ")
                 .append(" status = :status, ")
                 .append(" update_time = :updateTime ")
                 .append(" where id = :id ");
@@ -137,15 +138,13 @@ public class SkuDao {
         return namedParameterJdbcTemplate.query(sql, params, rowMapper);
     }
 
-    public List<SkuEntity> findAllBySpuIds(List<String> spuIds) {
+    public List<SkuEntity> findAll() {
         MapSqlParameterSource params = new MapSqlParameterSource();
 
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT ")
                 .append(" * ")
-                .append(" FROM  m_goods_sku ")
-                .append(" WHERE deleted = 0 AND spu_id in ( :spuIds ) ");
-        params.addValue("spuIds", spuIds);
+                .append(" FROM  m_goods_sku ");
 
         String sql = sb.toString();
 

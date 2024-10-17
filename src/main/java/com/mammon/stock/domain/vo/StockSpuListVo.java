@@ -7,6 +7,8 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author dcl
@@ -79,6 +81,8 @@ public class StockSpuListVo {
      * 规格数
      */
     private long specs;
+
+    private List<StockSkuSpecVo> skuSpecs = new ArrayList<>();
 
     /**
      * 零售价

@@ -75,6 +75,8 @@ public class StockSkuVo {
      */
     private int countedType;
 
+    private String joinSpec;
+
     /**
      * 规格
      */
