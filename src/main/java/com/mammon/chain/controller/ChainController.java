@@ -15,10 +15,7 @@ public class ChainController {
 
     @Resource
     private ChainService chainService;
-
-    @Resource
-    private ChainRecordService chainRecordService;
-
+    
     /**
      * 创建短连接
      *
@@ -29,22 +26,5 @@ public class ChainController {
     public ResultJson<String> create(@RequestParam String path) {
         String shortUrl = chainService.create(path);
         return ResultJson.ok(shortUrl);
-    }
-
-
-    /**
-     * 保存短链接打开记录并重定向到目标链接
-     * <p>
-     * 要加防刷机制
-     *
-     * @param code
-     * @param request
-     * @param response
-     * @return
-     */
-    @GetMapping("/{code}")
-    public void redirect(@PathVariable("code") String code,
-                         HttpServletRequest request, HttpServletResponse response) {
-        chainRecordService.redirect(code, request, response);
     }
 }
