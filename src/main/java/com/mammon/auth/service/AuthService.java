@@ -1,5 +1,6 @@
 package com.mammon.auth.service;
 
+import cn.hutool.core.lang.Validator;
 import com.mammon.auth.channel.factory.TradeChannelCode;
 import com.mammon.auth.channel.factory.TradeOpenChannel;
 import com.mammon.auth.channel.factory.TradeOpenFactory;
@@ -117,6 +118,9 @@ public class AuthService {
     }
 
     public LoginVo passwordLogin(HttpServletRequest request, LoginDto dto) {
+        if (Validator.isMobile(dto.getPhone())) {
+            throw new CustomException("手机号错误");
+        }
         // 验证登录次数
         validLoginTotal(dto.getPhone());
         // 验证账号
@@ -137,6 +141,9 @@ public class AuthService {
      * @return
      */
     public LoginVo smsCaptchaLogin(HttpServletRequest request, LoginDto dto) {
+        if (Validator.isMobile(dto.getPhone())) {
+            throw new CustomException("手机号错误");
+        }
         // 验证短信码
         smsCaptchaService.validSmsCaptcha(dto.getPhone(), dto.getSmsCaptcha());
         boolean existsAccount = accountService.existByPhone(dto.getPhone());

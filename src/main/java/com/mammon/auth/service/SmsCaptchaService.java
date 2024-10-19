@@ -1,5 +1,6 @@
 package com.mammon.auth.service;
 
+import cn.hutool.core.lang.Validator;
 import com.mammon.auth.domain.enums.CaptchaConst;
 import com.mammon.common.Generate;
 import com.mammon.exception.CustomException;
@@ -36,6 +37,9 @@ public class SmsCaptchaService {
      * @param smsType 短信类型
      */
     public void sendSmsCaptcha(String phone, int smsType) {
+        if (Validator.isMobile(phone)) {
+            throw new CustomException("手机号错误");
+        }
         String key = CaptchaConst.SEND_SMS_CAPTCHA + phone;
         validSmsCaptchaTotal(phone);
         String captchaCode = Generate.randomCode();
