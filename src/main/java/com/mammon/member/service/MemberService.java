@@ -337,7 +337,7 @@ public class MemberService {
         vo.setRefundTotal(cashierRefunds.size());
 
         if (CollUtil.isNotEmpty(cashierOrders)) {
-            BigDecimal referenceAmount = vo.getCashierAmount().divide(BigDecimal.valueOf(vo.getCashierTotal()), AmountUtil.BASE_SCALE, AmountUtil.ROUNDING_MODE);
+            BigDecimal referenceAmount = AmountUtil.divide(vo.getCashierAmount(), BigDecimal.valueOf(vo.getCashierTotal()));
             vo.setReferenceAmount(referenceAmount);
         }
         // 最近下单时间

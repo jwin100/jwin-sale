@@ -161,8 +161,8 @@ public class CashierOrderTradeService {
 
         // 计算折扣
         if (!Objects.equals(dto.getDiscount(), BigDecimal.ZERO)) {
-            BigDecimal discount = dto.getDiscount().divide(BigDecimal.valueOf(10), AmountUtil.BASE_SCALE, RoundingMode.DOWN);
-            BigDecimal amount = originalAmount.multiply(discount).setScale(AmountUtil.BASE_SCALE, RoundingMode.DOWN);
+            BigDecimal discount = AmountUtil.divide(dto.getDiscount(), BigDecimal.valueOf(10));
+            BigDecimal amount = AmountUtil.multiply(originalAmount, discount);
             discountAmount = originalAmount.subtract(amount);
             tempAmount = amount;
         }
@@ -430,7 +430,7 @@ public class CashierOrderTradeService {
                     if (skuVo == null) {
                         throw new CustomException("商品信息错误");
                     }
-                    if (skuVo.getCountedType() == SpuCountedType.UN_CAN.getCode() && x.getQuantity().compareTo(skuVo.getSellStock()) > 0) {
+                    if (skuVo.getCountedType() == SpuCountedType.NO.getCode() && x.getQuantity().compareTo(skuVo.getSellStock()) > 0) {
                         throw new CustomException("商品库存不足");
                     }
                     referenceAmount = skuVo.getReferenceAmount();
@@ -440,10 +440,10 @@ public class CashierOrderTradeService {
                     unitTypeName = skuVo.getUnitTypeName();
                 }
             }
-            originAmount = referenceAmount.multiply(x.getQuantity()).setScale(AmountUtil.BASE_SCALE, RoundingMode.DOWN);
+            originAmount = AmountUtil.multiply(referenceAmount, x.getQuantity());
             payableAmount = originAmount;
             if (adjustAmount.compareTo(BigDecimal.ZERO) > 0) {
-                payableAmount = adjustAmount.multiply(x.getQuantity()).setScale(AmountUtil.BASE_SCALE, RoundingMode.DOWN);
+                payableAmount = AmountUtil.multiply(adjustAmount, x.getQuantity());
             }
 
             CashierOrderSkuComputeVo vo = new CashierOrderSkuComputeVo();
@@ -515,7 +515,7 @@ public class CashierOrderTradeService {
             // 临时商品
             MemberAttrEntity memberAttr = memberAttrService.findByMerchantNo(merchantNo);
             if (StringUtils.isNotBlank(memberId) && memberAttr != null && memberAttr.getConvertAmount() > 0) {
-                BigDecimal amount = sku.getPayableAmount().divide(AmountUtil.parseBigDecimal(memberAttr.getConvertAmount()), AmountUtil.BASE_SCALE, RoundingMode.HALF_UP);
+                BigDecimal amount = AmountUtil.divide(sku.getPayableAmount(), AmountUtil.parseBigDecimal(memberAttr.getConvertAmount()));
                 vo.setIntegral(amount.longValue() * memberAttr.getConvertIntegral());
             }
             return vo;
@@ -526,7 +526,7 @@ public class CashierOrderTradeService {
                 vo.setSkuId(timeCardVo.getId());
                 vo.setSkuName(timeCardVo.getName());
                 vo.setIntegral(timeCardVo.getGiveIntegral());
-                vo.setCountedType(SpuCountedType.CAN.getCode());
+                vo.setCountedType(SpuCountedType.YES.getCode());
             }
             return vo;
         }
@@ -540,7 +540,7 @@ public class CashierOrderTradeService {
                 vo.setSkuId(rechargeVo.getId());
                 vo.setSkuName(skuName);
                 vo.setIntegral(rechargeVo.getGiveIntegral());
-                vo.setCountedType(SpuCountedType.CAN.getCode());
+                vo.setCountedType(SpuCountedType.YES.getCode());
             }
             return vo;
         }
@@ -551,11 +551,11 @@ public class CashierOrderTradeService {
             if (StringUtils.isNotBlank(memberId)) {
                 MemberAttrEntity memberAttr = memberAttrService.findByMerchantNo(merchantNo);
                 if (memberAttr != null && memberAttr.getConvertAmount() > 0) {
-                    BigDecimal amount = sku.getPayableAmount().divide(AmountUtil.parseBigDecimal(memberAttr.getConvertAmount()), AmountUtil.BASE_SCALE, RoundingMode.HALF_UP);
+                    BigDecimal amount = AmountUtil.divide(sku.getPayableAmount(), AmountUtil.parseBigDecimal(memberAttr.getConvertAmount()));
                     integral = amount.longValue() * memberAttr.getConvertIntegral();
                 }
             }
-            if (skuVo.getCountedType() == SpuCountedType.UN_CAN.getCode() && sku.getQuantity().compareTo(skuVo.getSellStock()) > 0) {
+            if (skuVo.getCountedType() == SpuCountedType.NO.getCode() && sku.getQuantity().compareTo(skuVo.getSellStock()) > 0) {
                 throw new CustomException(String.format("%s库存不足", sku.getSkuName()));
             }
             vo.setSpuId(skuVo.getSpuId());
@@ -587,9 +587,8 @@ public class CashierOrderTradeService {
         }
         List<DivideAmountModel> divides = products.stream().map(x -> {
             DivideAmountModel model = new DivideAmountModel();
-            BigDecimal weight = x.getPayableAmount().divide(payableAmount, 2,
-                    RoundingMode.HALF_UP);
-            BigDecimal shareAmount = weight.multiply(preferentialAmount).setScale(2, RoundingMode.HALF_UP);
+            BigDecimal weight = AmountUtil.divide(x.getPayableAmount(), payableAmount);
+            BigDecimal shareAmount = AmountUtil.multiply(weight, preferentialAmount);
             model.setId(x.getId());
             model.setWeight(weight);
             model.setShareAmount(shareAmount);
@@ -660,7 +659,7 @@ public class CashierOrderTradeService {
     @Transactional(rollbackFor = Exception.class)
     public void lockStock(long merchantNo, long storeNo, String orderId, List<CashierOrderProductDto> products) {
         products.forEach(x -> {
-            if (StringUtils.isNotBlank(x.getSkuId()) && x.getCountedType() == SpuCountedType.UN_CAN.getCode()) {
+            if (StringUtils.isNotBlank(x.getSkuId()) && x.getCountedType() == SpuCountedType.NO.getCode()) {
                 // 预扣库存
                 StockStoreLockDto lockDto = new StockStoreLockDto();
                 lockDto.setSpuId(x.getSpuId());
@@ -848,6 +847,7 @@ public class CashierOrderTradeService {
         // 打印订单小票
         cashierOrderTradeAsyncService.payFinishPrint(order.getId());
         // 事务提交后执行
+        // TODO 改成同步
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {

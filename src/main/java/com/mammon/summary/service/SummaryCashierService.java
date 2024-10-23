@@ -138,7 +138,7 @@ public class SummaryCashierService {
 
         BigDecimal unitAmount = BigDecimal.ZERO;
         if (cashierTotal > 0) {
-            unitAmount = AmountUtil.parseBigDecimal(cashierAmount).divide(BigDecimal.valueOf(cashierAmount), 2, RoundingMode.HALF_UP);
+            unitAmount = AmountUtil.divide(AmountUtil.parseBigDecimal(cashierAmount), BigDecimal.valueOf(cashierAmount));
         }
 
         SummaryCashierDashVo vo = new SummaryCashierDashVo();

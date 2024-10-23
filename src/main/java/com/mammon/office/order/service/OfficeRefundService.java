@@ -94,8 +94,8 @@ public class OfficeRefundService {
                 SmsEntity sms = smsService.smsInfo(merchantNo);
                 if (sms != null && sms.getRecharge() < x.getQuantity()) {
                     long useRecharge = x.getQuantity() - sms.getRecharge();
-                    BigDecimal unitAmount = x.getPayableAmount().divide(BigDecimal.valueOf(x.getQuantity()), 2, RoundingMode.HALF_UP);
-                    BigDecimal deductAmount = unitAmount.multiply(BigDecimal.valueOf(useRecharge));
+                    BigDecimal unitAmount = AmountUtil.divide(x.getPayableAmount(), BigDecimal.valueOf(x.getQuantity()));
+                    BigDecimal deductAmount = AmountUtil.multiply(unitAmount, BigDecimal.valueOf(useRecharge));
                     BigDecimal refundAmount = x.getPayableAmount().subtract(deductAmount);
                     itemVo.setRefundQuantity(sms.getRecharge());
                     itemVo.setDeductAmount(deductAmount);

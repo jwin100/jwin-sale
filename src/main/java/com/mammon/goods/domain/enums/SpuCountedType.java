@@ -11,8 +11,8 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum SpuCountedType implements IEnum<SpuCountedType> {
-    UN_CAN(0, "否"),
-    CAN(1, "是"),
+    NO(0, "否"),
+    YES(1, "是"),
     ;
 
     private final int code;

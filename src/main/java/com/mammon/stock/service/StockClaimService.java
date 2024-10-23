@@ -69,7 +69,7 @@ public class StockClaimService {
         if (largeSpu == null || smallSpu == null) {
             throw new CustomException("商品信息错误");
         }
-        if (largeSpu.getCountedType() == SpuCountedType.CAN.getCode() || smallSpu.getCountedType() == SpuCountedType.CAN.getCode()) {
+        if (largeSpu.getCountedType() == SpuCountedType.YES.getCode() || smallSpu.getCountedType() == SpuCountedType.YES.getCode()) {
             throw new CustomException("服务商品不能参与组装拆包操作");
         }
 
@@ -99,7 +99,7 @@ public class StockClaimService {
         if (largeSpu == null || smallSpu == null) {
             throw new CustomException("商品信息错误");
         }
-        if (largeSpu.getCountedType() == SpuCountedType.CAN.getCode() || smallSpu.getCountedType() == SpuCountedType.CAN.getCode()) {
+        if (largeSpu.getCountedType() == SpuCountedType.YES.getCode() || smallSpu.getCountedType() == SpuCountedType.YES.getCode()) {
             throw new CustomException("服务商品不能参与组装拆包操作");
         }
 

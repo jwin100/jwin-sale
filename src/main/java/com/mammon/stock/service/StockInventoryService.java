@@ -84,7 +84,7 @@ public class StockInventoryService {
     public void finish(long merchantNo, long storeNo, String id, StockInventoryFinishDto dto) {
         List<String> spuIds = dto.getProducts().stream().map(StockInventoryProductDto::getSpuId).distinct().collect(Collectors.toList());
         List<StockSpuEntity> spus = stockSpuService.findListBySpuIds(merchantNo, storeNo, spuIds);
-        if (spus.stream().anyMatch(x -> x.getCountedType() == SpuCountedType.CAN.getCode())) {
+        if (spus.stream().anyMatch(x -> x.getCountedType() == SpuCountedType.YES.getCode())) {
             throw new CustomException("服务商品不能参与盘点");
         }
 

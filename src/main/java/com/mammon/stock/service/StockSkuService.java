@@ -380,7 +380,7 @@ public class StockSkuService {
      */
     public List<StockSkuCountedVo> findCountedList(long merchantNo, long storeNo, StockSkuCountedQuery query) {
         StockSpuQuery spuQuery = new StockSpuQuery();
-        spuQuery.setCountedType(SpuCountedType.CAN.getCode());
+        spuQuery.setCountedType(SpuCountedType.YES.getCode());
         List<StockSpuListVo> stockSpus = stockSpuService.findList(merchantNo, storeNo, spuQuery);
         if (CollectionUtils.isEmpty(stockSpus)) {
             return Collections.emptyList();

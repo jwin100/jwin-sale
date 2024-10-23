@@ -77,7 +77,7 @@ public class StockAllocateService {
         }
         List<String> spuIds = dto.getSkus().stream().map(StockAllocateSkuDto::getSpuId).collect(Collectors.toList());
         List<StockSpuEntity> spus = stockSpuService.findListBySpuIds(merchantNo, dto.getOutStoreNo(), spuIds);
-        if (spus.stream().anyMatch(x -> x.getCountedType() == SpuCountedType.CAN.getCode())) {
+        if (spus.stream().anyMatch(x -> x.getCountedType() == SpuCountedType.YES.getCode())) {
             throw new CustomException("服务商品不能参与库存调拨");
         }
 

@@ -81,7 +81,7 @@ public class StockPurchaseOrderService {
         }
         List<String> spuIds = dto.getSkus().stream().map(StockPurchaseOrderSkuDto::getSpuId).distinct().collect(Collectors.toList());
         List<StockSpuEntity> spus = stockSpuService.findListBySpuIds(merchantNo, storeNo, spuIds);
-        if (spus.stream().anyMatch(x -> x.getCountedType() == SpuCountedType.CAN.getCode())) {
+        if (spus.stream().anyMatch(x -> x.getCountedType() == SpuCountedType.YES.getCode())) {
             throw new CustomException("服务商品不能参与采购操作");
         }
 

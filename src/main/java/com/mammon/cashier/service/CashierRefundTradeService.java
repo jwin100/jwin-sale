@@ -269,18 +269,18 @@ public class CashierRefundTradeService {
                 orderPayableAmount = AmountUtil.parseBigDecimal(orderProduct.getDivideAmount());
             }
             // 计算单价
-            BigDecimal referenceAmount = orderPayableAmount.divide(saleQuantity, AmountUtil.BASE_SCALE, RoundingMode.DOWN);
+            BigDecimal referenceAmount = AmountUtil.divide(orderPayableAmount, saleQuantity);
             if (x.getAdjustAmount() != null && x.getAdjustAmount().compareTo(BigDecimal.ZERO) > 0) {
                 referenceAmount = x.getAdjustAmount();
             }
 
-            BigDecimal payableAmount = referenceAmount.multiply(refundQuantity).setScale(AmountUtil.BASE_SCALE, RoundingMode.DOWN);
+            BigDecimal payableAmount = AmountUtil.multiply(referenceAmount, refundQuantity);
             boolean allRefund = false;
             if (sureRefundQuantity.equals(x.getQuantity())) {
                 allRefund = true;
                 payableAmount = AmountUtil.parseBigDecimal(orderProduct.getPayableAmount() - orderProduct.getRefundAmount());
                 if (x.getAdjustAmount() != null && x.getAdjustAmount().compareTo(BigDecimal.ZERO) > 0) {
-                    payableAmount = referenceAmount.multiply(refundQuantity).setScale(AmountUtil.BASE_SCALE, RoundingMode.DOWN);
+                    payableAmount = AmountUtil.multiply(referenceAmount, refundQuantity);
                 }
                 if (orderProduct.getDivideAmount() > 0) {
                     payableAmount = AmountUtil.parseBigDecimal(orderProduct.getDivideAmount() - orderProduct.getRefundAmount());

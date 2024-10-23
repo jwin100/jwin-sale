@@ -177,7 +177,7 @@ public class MemberAssetsService {
         if (ruleVo == null) {
             return;
         }
-        long addRecharge = AmountUtil.parse(ruleVo.getPrepaidAmount().multiply(quantity));
+        long addRecharge = AmountUtil.parse(AmountUtil.multiply(ruleVo.getPrepaidAmount(), quantity));
 
         long beforeAssets = entity.getNowRecharge();
         long afterAssets = entity.getNowRecharge() - addRecharge;
