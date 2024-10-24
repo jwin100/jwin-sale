@@ -118,9 +118,6 @@ public class AuthService {
     }
 
     public LoginVo passwordLogin(HttpServletRequest request, LoginDto dto) {
-        if (Validator.isMobile(dto.getPhone())) {
-            throw new CustomException("手机号错误");
-        }
         // 验证登录次数
         validLoginTotal(dto.getPhone());
         // 验证账号
