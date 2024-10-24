@@ -35,4 +35,6 @@ public class CashierOrderSkuDto {
      * 商品图
      */
     private String picture;
+
+    private int countedType;
 }

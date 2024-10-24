@@ -382,6 +382,7 @@ public class CashierOrderTradeService {
                 vo.setPayableAmount(BigDecimal.ZERO);
                 vo.setSellStock(x.getSellStock());
                 vo.setPicture(x.getPicture());
+                vo.setCountedType(x.getCountedType());
                 return vo;
             }).collect(Collectors.toList());
         }
@@ -461,6 +462,7 @@ public class CashierOrderTradeService {
             vo.setUnitType(unitType);
             vo.setUnitTypeName(unitTypeName);
             vo.setPicture(x.getPicture());
+            vo.setCountedType(x.getCountedType());
             return vo;
         }).collect(Collectors.toList());
     }
