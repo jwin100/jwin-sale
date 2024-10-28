@@ -6,8 +6,8 @@ package com.mammon.office.order.domain.enums;
  */
 public class OfficeOrderPayTypeConst {
 
-    public static final String alipayLogoUrl = "https://picture.91pain.com/icon/alipay-logo.png";
+    public static final String alipayLogoUrl = "https://picture.jwin100.cn/default/icon/alipay-logo.png";
 
-    public static final String alipayPaymentIconUrl = "https://picture.91pain.com/icon/alipay-payment-icon.png";
-    public static final String wechatPaymentIconUrl = "https://picture.91pain.com/icon/wechat-payment-icon.png";
+    public static final String alipayPaymentIconUrl = "https://picture.jwin100.cn/default/icon/alipay-payment-icon.png";
+    public static final String wechatPaymentIconUrl = "https://picture.jwin100.cn/default/icon/wechat-payment-icon.png";
 }
