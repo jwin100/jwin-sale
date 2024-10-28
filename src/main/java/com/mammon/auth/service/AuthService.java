@@ -138,7 +138,7 @@ public class AuthService {
      * @return
      */
     public LoginVo smsCaptchaLogin(HttpServletRequest request, LoginDto dto) {
-        if (Validator.isMobile(dto.getPhone())) {
+        if (!Validator.isMobile(dto.getPhone())) {
             throw new CustomException("手机号错误");
         }
         // 验证短信码

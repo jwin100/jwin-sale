@@ -202,7 +202,7 @@ public class MemberService {
         BeanUtils.copyProperties(dto, entity);
         entity.setUpdateTime(LocalDateTime.now());
         memberDao.edit(entity);
-        if (Validator.isMobile(dto.getPhone())) {
+        if (!Validator.isMobile(dto.getPhone())) {
             MemberEntity member = memberDao.findByPhone(merchantNo, dto.getPhone());
             if (member != null && !member.getId().equals(id)) {
                 throw new CustomException("手机号重复");

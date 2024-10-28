@@ -37,7 +37,7 @@ public class SmsCaptchaService {
      * @param smsType 短信类型
      */
     public void sendSmsCaptcha(String phone, int smsType) {
-        if (Validator.isMobile(phone)) {
+        if (!Validator.isMobile(phone)) {
             throw new CustomException("手机号错误");
         }
         String key = CaptchaConst.SEND_SMS_CAPTCHA + phone;
