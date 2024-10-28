@@ -209,9 +209,10 @@ public class AccountService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void initAccount(long merchantNo, String accountId, FirstSetPasswordDto dto) {
+    public void initAccount(long merchantNo, long storeNo, String accountId, FirstSetPasswordDto dto) {
         if (StrUtil.isNotBlank(dto.getMerchantName())) {
             merchantService.editMerchantName(merchantNo, dto.getMerchantName());
+            merchantStoreService.editName(merchantNo, storeNo, dto.getMerchantName());
         }
         if (StrUtil.isNotBlank(dto.getName())) {
             editName(accountId, dto.getName());

@@ -156,6 +156,15 @@ public class MerchantStoreService {
         merchantStoreDao.edit(entity);
     }
 
+    public void editName(long merchantNo, long storeNo, String name) {
+        MerchantStoreEntity store = merchantStoreDao.findByStoreNo(merchantNo, storeNo);
+        if (store == null) {
+            throw new CustomException("门店信息错误");
+        }
+        store.setStoreName(name);
+        merchantStoreDao.edit(store);
+    }
+
     public void editStatus(String id, int status) {
         if (IEnum.getByCode(status, CommonStatus.class) == null) {
             throw new CustomException("状态信息错误");

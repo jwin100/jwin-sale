@@ -63,7 +63,7 @@ public class AccountController {
                                         @RequestHeader long storeNo,
                                         @RequestHeader String accountId,
                                         @Validated @RequestBody FirstSetPasswordDto dto) {
-        accountService.initAccount(merchantNo, accountId, dto);
+        accountService.initAccount(merchantNo, storeNo, accountId, dto);
         return ResultJson.ok();
     }
 
