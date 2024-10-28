@@ -73,6 +73,18 @@ public class MerchantService {
         merchantDao.edit(merchant);
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    public void editMerchantName(long merchantNo, String merchantName) {
+        MerchantEntity merchant = merchantDao.findByMerchantNo(merchantNo);
+        if (merchant == null) {
+            throw new CustomException("商户信息错误");
+        }
+        merchant.setMerchantName(merchantName);
+        merchant.setUpdateTime(LocalDateTime.now());
+        merchant.setMerchantNo(merchantNo);
+        merchantDao.edit(merchant);
+    }
+
     public MerchantEntity findByMerchantNo(long merchantNo) {
         return merchantDao.findByMerchantNo(merchantNo);
     }

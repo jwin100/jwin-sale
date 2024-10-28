@@ -12,6 +12,16 @@ import javax.validation.constraints.NotBlank;
 public class FirstSetPasswordDto {
 
     /**
+     * 商户名
+     */
+    private String merchantName;
+
+    /**
+     * 姓名
+     */
+    private String name;
+
+    /**
      * 新密码
      */
     @NotBlank(message = "新密码不能为空")

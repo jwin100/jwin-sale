@@ -59,11 +59,11 @@ public class AccountController {
     }
 
     @PostMapping("/first-set-password")
-    public ResultJson<Void> setPassword(@RequestHeader long merchantNo,
+    public ResultJson<Void> initAccount(@RequestHeader long merchantNo,
                                         @RequestHeader long storeNo,
                                         @RequestHeader String accountId,
                                         @Validated @RequestBody FirstSetPasswordDto dto) {
-        accountService.editPassword(accountId, dto);
+        accountService.initAccount(merchantNo, accountId, dto);
         return ResultJson.ok();
     }
 

@@ -1,6 +1,7 @@
 package com.mammon.clerk.service;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.mammon.clerk.domain.enums.AccountCashMode;
 import com.mammon.common.Generate;
 import com.mammon.common.PageResult;
@@ -166,6 +167,15 @@ public class AccountService {
         accountRoleMapService.save(accountRole);
     }
 
+    public void editName(String id, String name) {
+        AccountEntity account = accountDao.findById(id);
+        if (account == null) {
+            throw new CustomException("店员信息错误");
+        }
+        account.setName(name);
+        accountDao.edit(account);
+    }
+
     public void editPhone(String id, String originalPhone, String newPhone) {
         accountDao.editPhone(id, originalPhone, newPhone);
     }
@@ -198,7 +208,14 @@ public class AccountService {
         editPassword(id, account.getPassword(), password);
     }
 
-    public void editPassword(String accountId, FirstSetPasswordDto dto) {
+    @Transactional(rollbackFor = Exception.class)
+    public void initAccount(long merchantNo, String accountId, FirstSetPasswordDto dto) {
+        if (StrUtil.isNotBlank(dto.getMerchantName())) {
+            merchantService.editMerchantName(merchantNo, dto.getMerchantName());
+        }
+        if (StrUtil.isNotBlank(dto.getName())) {
+            editName(accountId, dto.getName());
+        }
         if (!dto.getConfirmPassword().equals(dto.getPassword())) {
             throw new CustomException("两次密码输入不一致");
         }
