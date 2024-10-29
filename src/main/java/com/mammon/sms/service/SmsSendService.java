@@ -2,12 +2,15 @@ package com.mammon.sms.service;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.mammon.common.Generate;
 import com.mammon.common.PageResult;
 import com.mammon.common.PageVo;
 import com.mammon.config.ApplicationBean;
+import com.mammon.enums.CommonIf;
+import com.mammon.enums.CommonStatus;
 import com.mammon.exception.CustomException;
 import com.mammon.merchant.domain.vo.MerchantStoreVo;
 import com.mammon.merchant.service.MerchantStoreService;
@@ -81,10 +84,9 @@ public class SmsSendService {
      */
     @Transactional(rollbackFor = Exception.class)
     public void asyncSend(SmsSendNoticeDto dto) {
-        validSmsEnable(dto.getMerchantNo());
-
         // 保存发送记录
         SmsSendEntity entity = new SmsSendEntity();
+        entity.setId(Generate.generateUUID());
         entity.setMerchantNo(dto.getMerchantNo());
         entity.setStoreNo(dto.getStoreNo());
         entity.setReturnCnt(0);
@@ -97,49 +99,14 @@ public class SmsSendService {
         setSmsRecord(entity, dto.getUsers(), dto.getTempParams());
         smsSendDao.save(entity);
         smsSendItemService.batchSave(entity.getId(), dto.getUsers(), entity.getSendMessage());
-        // 预扣费
-        smsRecharge(entity);
+        if (entity.getStatus() != SmsSendStatusEnum.SUBMIT_ERROR.getCode()) {
+            // 预扣费
+            smsRecharge(entity);
+        }
         if (entity.getStatus() == SmsSendStatusEnum.SENDING.getCode()) {
             log.info("短信已体提交：{}", JsonUtil.toJSONString(entity));
             smsChannelSend(entity);
         }
-    }
-
-    private void setSmsRecord(SmsSendEntity entity, List<SmsSendUserDto> users, Map<String, String> tempParams) {
-        if (CollUtil.isEmpty(users)) {
-            throw new CustomException("发送人不能为空");
-        }
-        SmsSignEntity sign = validSmsSign(entity.getMerchantNo());
-        SmsTemplateEntity template = validSmsTemplate(entity.getMerchantNo(), entity.getTempType());
-
-        String sendId = Generate.generateUUID();
-        int tempGroup = template.getTempGroup();
-        int smsType = template.getSmsType();
-        String content = makeContent(sign.getSignName(), smsType, template.getTemplate(), tempParams);
-        String params = JsonUtil.toJSONString(tempParams);
-        int messageLength = content.length();
-        int messageCnt = (int) Math.ceil((double) messageLength / SMS_MESSAGE_INNER_MAX_LENGTH);
-        int messageChannelCnt = (int) Math.ceil((double) messageLength / SMS_MESSAGE_CHANNEL_MAX_LENGTH);
-        int consumeCnt = messageCnt * users.size();
-        int status = smsType == SmsTypeEnum.MARKET.getCode() ?
-                SmsSendStatusEnum.EXAMINE_WAIT.getCode() :
-                SmsSendStatusEnum.SENDING.getCode();
-        SmsChannelEntity smsChannel = getSmsChannel(smsType);
-
-        entity.setId(sendId);
-        entity.setSignId(sign.getId());
-        entity.setTempId(template.getId());
-        entity.setReturnCnt(0);
-        entity.setTempGroup(tempGroup);
-        entity.setSmsType(smsType);
-        entity.setSendMessage(content);
-        entity.setMessageParams(params);
-        entity.setMessageLength(messageLength);
-        entity.setMessageCnt(messageCnt);
-        entity.setMessageChannelCnt(messageChannelCnt);
-        entity.setConsumeCnt(consumeCnt);
-        entity.setSmsChannelId(smsChannel.getId());
-        entity.setStatus(status);
     }
 
     /**
@@ -152,44 +119,27 @@ public class SmsSendService {
      */
     @Transactional(rollbackFor = Exception.class)
     public void syncSend(long merchantNo, long storeNo, String accountId, SmsSendRecordDto dto) {
-        validSmsEnable(merchantNo);
-        validSmsSign(merchantNo, dto.getSignId());
-
-        String sendId = Generate.generateUUID();
-        int tempType = SmsTempTypeEnum.OTHER.getCode();
-        int smsType = SmsTypeEnum.MARKET.getCode();
-        int tempGroup = merchantNo == 0 ? SmsTempGroupEnum.SYSTEM_SMS.getCode() : SmsTempGroupEnum.MERCHANT_SMS.getCode();
-        int messageLength = dto.getSendMessage().length();
-        int messageCnt = (int) Math.ceil((double) messageLength / SMS_MESSAGE_INNER_MAX_LENGTH);
-        int messageChannelCnt = (int) Math.ceil((double) messageLength / SMS_MESSAGE_CHANNEL_MAX_LENGTH);
-        int consumeCnt = messageCnt * dto.getUsers().size();
-        SmsChannelEntity smsChannel = getSmsChannel(smsType);
-
         SmsSendEntity entity = new SmsSendEntity();
-        entity.setId(sendId);
+        entity.setId(Generate.generateUUID());
         entity.setMerchantNo(merchantNo);
         entity.setStoreNo(storeNo);
         entity.setSignId(dto.getSignId());
         entity.setReturnCnt(0);
         entity.setSendAccountId(accountId);
         entity.setFree(makeFree(merchantNo));
-        entity.setTempGroup(tempGroup);
-        entity.setTempType(tempType);
-        entity.setSmsType(smsType);
+        entity.setTempGroup(makeTempGroup(entity.getMerchantNo()));
         entity.setSendMessage(dto.getSendMessage());
-        entity.setMessageLength(messageLength);
-        entity.setMessageCnt(messageCnt);
-        entity.setMessageChannelCnt(messageChannelCnt);
-        entity.setConsumeCnt(consumeCnt);
-        entity.setSmsChannelId(smsChannel.getId());
         entity.setStatus(SmsSendStatusEnum.EXAMINE_WAIT.getCode());
         entity.setSendTime(LocalDateTime.now());
         entity.setCreateTime(LocalDateTime.now());
         entity.setUpdateTime(LocalDateTime.now());
+        setSmsRecord(entity, dto);
         smsSendDao.save(entity);
-        smsSendItemService.batchSave(sendId, dto.getUsers(), dto.getSendMessage());
-        //预扣费
-        smsRecharge(entity);
+        smsSendItemService.batchSave(entity.getId(), dto.getUsers(), dto.getSendMessage());
+        if (entity.getStatus() != SmsSendStatusEnum.SUBMIT_ERROR.getCode()) {
+            //预扣费
+            smsRecharge(entity);
+        }
         if (entity.getStatus() == SmsSendStatusEnum.SENDING.getCode()) {
             smsChannelSend(entity);
         }
@@ -215,6 +165,11 @@ public class SmsSendService {
         }
     }
 
+    /**
+     * 单挑发送
+     *
+     * @param entity
+     */
     @Transactional(rollbackFor = Exception.class)
     public void smsChannelSend(SmsSendEntity entity) {
         SmsChannelEntity smsChannel = smsChannelService.findById(entity.getSmsChannelId());
@@ -266,6 +221,12 @@ public class SmsSendService {
         }
     }
 
+    /**
+     * 批量发送
+     *
+     * @param entity
+     * @param items
+     */
     @Transactional(rollbackFor = Exception.class)
     public void smsChannelBatchSend(SmsSendEntity entity, List<SmsSendItemEntity> items) {
         SmsChannelEntity smsChannel = smsChannelService.findById(entity.getSmsChannelId());
@@ -296,10 +257,24 @@ public class SmsSendService {
                     x.getStatus(), x.getErrorDesc());
         });
 
-        if (smsSendVo.getStatus() == SmsSendStatusEnum.SEND_FAIL.getCode() && entity.getFree() == 0) {
+        // 不扣费短信不做短信额度返还操作
+        if (entity.getFree() == CommonIf.YES.getCode()) {
+            return;
+        }
+
+        if (smsSendVo.getStatus() == SmsSendStatusEnum.SEND_FAIL.getCode()) {
             //全部失败，整体回滚
             smsService.smsRechargeChange(entity.getMerchantNo(), entity.getStoreNo(), SmsRechargeLogTypeConst.返还,
                     entity.getId(), null, entity.getConsumeCnt(), "发送失败返还");
+        } else {
+            //检查部分,部分失败回滚
+            long errCount = smsSendVo.getResDetail().stream()
+                    .filter(x -> x.getStatus() == SmsSendItemStatusEnum.FAIL.getCode()).count();
+            if (errCount > 0) {
+                int cnt = entity.getMessageCnt() * (int) errCount;
+                smsService.smsRechargeChange(entity.getMerchantNo(), entity.getStoreNo(), SmsRechargeLogTypeConst.返还,
+                        entity.getId(), null, cnt, "发送失败返还");
+            }
         }
     }
 
@@ -310,7 +285,7 @@ public class SmsSendService {
         if (entity.getFree() == 0) {
             SmsEntity sms = smsService.smsInfo(entity.getMerchantNo());
             if (sms != null && sms.getRecharge() < entity.getConsumeCnt()) {
-                updateStatus(entity.getId(), entity.getStatus(), SmsSendItemStatusEnum.FAIL.getCode(), "短信余额不足");
+                updateStatus(entity.getId(), entity.getStatus(), SmsSendStatusEnum.SEND_FAIL.getCode(), "短信余额不足");
                 return;
             }
             // 预扣费
@@ -328,7 +303,7 @@ public class SmsSendService {
         List<SmsSendEntity> list = smsSendDao.findAllByIds(ids);
         list.forEach(x -> {
             int result = updateStatus(x.getId(), SmsSendStatusEnum.EXAMINE_WAIT.getCode(), dto.getStatus(), dto.getRemark());
-            if (result > 0 && dto.getStatus() != SmsSendStatusEnum.SENDING.getCode()) {
+            if (result > 0 && dto.getStatus() == SmsSendStatusEnum.SENDING.getCode()) {
                 batchSend(x);
             }
         });
@@ -392,35 +367,128 @@ public class SmsSendService {
         return PageResult.of(dto.getPageIndex(), dto.getPageSize(), total, vos);
     }
 
-    private SmsEntity validSmsEnable(long merchantNo) {
-        SmsEntity sms = smsService.smsInfo(merchantNo);
-        if (sms == null || sms.getStatus() != 1) {
-            throw new CustomException("短信未开通");
+    private void setSmsRecord(SmsSendEntity entity, List<SmsSendUserDto> users, Map<String, String> tempParams) {
+        if (CollUtil.isEmpty(users)) {
+            entity.setStatus(SmsSendStatusEnum.SUBMIT_ERROR.getCode());
+            entity.setErrorDesc("发送人不能为空");
+            return;
+        }
+        SmsEntity sms = validSmsEnable(entity);
+        if (sms == null) {
+            return;
+        }
+        // 获取签名
+        SmsSignEntity sign = validSmsSign(entity);
+        if (sign == null) {
+            return;
+        }
+        // 获取发送模板
+        SmsTemplateEntity template = validSmsTemplate(entity);
+        if (template == null) {
+            return;
+        }
+
+        int tempGroup = template.getTempGroup();
+        int smsType = template.getSmsType();
+        String content = makeContent(sign.getSignName(), smsType, template.getTemplate(), tempParams);
+        String params = JsonUtil.toJSONString(tempParams);
+        int messageLength = content.length();
+        int messageCnt = (int) Math.ceil((double) messageLength / SMS_MESSAGE_INNER_MAX_LENGTH);
+        int messageChannelCnt = (int) Math.ceil((double) messageLength / SMS_MESSAGE_CHANNEL_MAX_LENGTH);
+        int consumeCnt = messageCnt * users.size();
+        int status = smsType == SmsTypeEnum.MARKET.getCode() ?
+                SmsSendStatusEnum.EXAMINE_WAIT.getCode() :
+                SmsSendStatusEnum.SENDING.getCode();
+        SmsChannelEntity smsChannel = getSmsChannel(smsType);
+
+        entity.setSignId(sign.getId());
+        entity.setTempId(template.getId());
+        entity.setReturnCnt(0);
+        entity.setTempGroup(tempGroup);
+        entity.setSmsType(smsType);
+        entity.setSendMessage(content);
+        entity.setMessageParams(params);
+        entity.setMessageLength(messageLength);
+        entity.setMessageCnt(messageCnt);
+        entity.setMessageChannelCnt(messageChannelCnt);
+        entity.setConsumeCnt(consumeCnt);
+        entity.setSmsChannelId(smsChannel.getId());
+        entity.setStatus(status);
+    }
+
+    private void setSmsRecord(SmsSendEntity entity, SmsSendRecordDto dto) {
+        if (CollUtil.isEmpty(dto.getUsers())) {
+            entity.setStatus(SmsSendStatusEnum.SUBMIT_ERROR.getCode());
+            entity.setErrorDesc("发送人不能为空");
+            return;
+        }
+        SmsEntity sms = validSmsEnable(entity);
+        if (sms == null) {
+            return;
+        }
+        // 获取签名
+        SmsSignEntity sign = validSmsSign(entity);
+        if (sign == null) {
+            return;
+        }
+
+        if (dto.getTempType() == null) {
+            dto.setTempType(SmsTempTypeEnum.OTHER.getCode());
+        }
+        int smsType = SmsTypeEnum.MARKET.getCode();
+
+        int messageLength = dto.getSendMessage().length();
+        int messageCnt = (int) Math.ceil((double) messageLength / SMS_MESSAGE_INNER_MAX_LENGTH);
+        int messageChannelCnt = (int) Math.ceil((double) messageLength / SMS_MESSAGE_CHANNEL_MAX_LENGTH);
+        int consumeCnt = messageCnt * dto.getUsers().size();
+        SmsChannelEntity smsChannel = getSmsChannel(smsType);
+
+        entity.setTempType(dto.getTempType());
+        entity.setSmsType(smsType);
+        entity.setSendMessage(dto.getSendMessage());
+        entity.setMessageLength(messageLength);
+        entity.setMessageCnt(messageCnt);
+        entity.setMessageChannelCnt(messageChannelCnt);
+        entity.setConsumeCnt(consumeCnt);
+        entity.setSmsChannelId(smsChannel.getId());
+    }
+
+    private SmsEntity validSmsEnable(SmsSendEntity entity) {
+        SmsEntity sms = smsService.smsInfo(entity.getMerchantNo());
+        if (sms == null || sms.getStatus() != CommonStatus.ENABLED.getCode()) {
+            entity.setStatus(SmsSendStatusEnum.SUBMIT_ERROR.getCode());
+            entity.setErrorDesc("短信未开通");
+            return null;
         }
         return sms;
     }
 
-    private SmsSignEntity validSmsSign(long merchantNo) {
-        SmsSignEntity sign = smsSignService.findByDefaultStatus(merchantNo);
-        if (sign == null || sign.getStatus() != SmsSignStatusEnum.SUCCESS.getCode()) {
-            throw new CustomException("短信签名错误");
+    private SmsSignEntity validSmsSign(SmsSendEntity entity) {
+        if (StrUtil.isBlank(entity.getSignId())) {
+            SmsSignEntity sign = smsSignService.findByDefaultStatus(entity.getMerchantNo());
+            if (sign == null || sign.getStatus() != SmsSignStatusEnum.SUCCESS.getCode()) {
+                entity.setStatus(SmsSendStatusEnum.SUBMIT_ERROR.getCode());
+                entity.setErrorDesc("签名错误");
+                return null;
+            }
+            return sign;
+        } else {
+            SmsSignEntity sign = smsSignService.findById(entity.getMerchantNo(), entity.getSignId());
+            if (sign == null || sign.getStatus() != SmsSignStatusEnum.SUCCESS.getCode()) {
+                entity.setStatus(SmsSendStatusEnum.SUBMIT_ERROR.getCode());
+                entity.setErrorDesc("签名错误");
+                return null;
+            }
+            return sign;
         }
-        return sign;
     }
 
-    private SmsSignEntity validSmsSign(long merchantNo, String signId) {
-        SmsSignEntity sign = smsSignService.findById(merchantNo, signId);
-        if (sign == null || sign.getStatus() != SmsSignStatusEnum.SUCCESS.getCode()) {
-            throw new CustomException("短信签名错误");
-        }
-        return sign;
-    }
-
-    private SmsTemplateEntity validSmsTemplate(long merchantNo, int tempType) {
-        SmsTemplateEntity template = smsTemplateSettingService.findByTempType(merchantNo, tempType);
+    private SmsTemplateEntity validSmsTemplate(SmsSendEntity entity) {
+        SmsTemplateEntity template = smsTemplateSettingService.findByTempType(entity.getMerchantNo(), entity.getTempType());
         if (template == null || template.getStatus() != SmsSignStatusEnum.SUCCESS.getCode()) {
-            log.error("短信模板错误:{}", template);
-            throw new CustomException("短信模板错误");
+            entity.setStatus(SmsSendStatusEnum.SUBMIT_ERROR.getCode());
+            entity.setErrorDesc("发送模板错误");
+            return null;
         }
         return template;
     }
@@ -431,6 +499,10 @@ public class SmsSendService {
             throw new CustomException("发送渠道错误");
         }
         return smsChannel;
+    }
+
+    private int makeTempGroup(long merchantNo) {
+        return merchantNo == 0 ? SmsTempGroupEnum.SYSTEM_SMS.getCode() : SmsTempGroupEnum.MERCHANT_SMS.getCode();
     }
 
     private int makeFree(long merchantNo) {

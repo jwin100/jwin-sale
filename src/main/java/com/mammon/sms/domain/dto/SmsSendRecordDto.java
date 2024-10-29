@@ -15,5 +15,7 @@ public class SmsSendRecordDto {
 
     private String sendMessage;
 
+    private Integer tempType;
+
     private List<SmsSendUserDto> users = new ArrayList<>();
 }
