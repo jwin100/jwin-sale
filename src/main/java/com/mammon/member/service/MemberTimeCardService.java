@@ -13,6 +13,7 @@ import com.mammon.member.domain.entity.MemberTimeCardEntity;
 import com.mammon.member.domain.vo.*;
 import com.mammon.merchant.service.MerchantStoreService;
 import com.mammon.clerk.service.AccountService;
+import com.mammon.sms.domain.dto.MemberCountedNoticeDto;
 import com.mammon.sms.service.SmsSendNoticeService;
 import com.mammon.sms.service.SmsSendService;
 import com.mammon.sms.service.SmsTemplateSettingService;
@@ -123,14 +124,13 @@ public class MemberTimeCardService {
         memberTimeCardLogService.create(accountId, memberId, orderNo, 1, addTimeCard,
                 timeCard.getNowTimeCard(), "购买计次卡");
         // 事务提交后执行
-        MemberTimeCardEntity finalTimeCard = timeCard;
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                // 发送短信通知
-                smsSendNoticeService.memberCountedCreateSend(memberId, finalTimeCard.getName(), addTimeCard, finalTimeCard.getNowTimeCard());
-            }
-        });
+        // 发送短信通知
+        MemberCountedNoticeDto noticeDto = new MemberCountedNoticeDto();
+        noticeDto.setMemberId(memberId);
+        noticeDto.setTimeCardName(timeCard.getName());
+        noticeDto.setAddTimeCard(addTimeCard);
+        noticeDto.setNowTimeCard(timeCard.getNowTimeCard());
+        smsSendNoticeService.memberCountedCreateSend(noticeDto);
     }
 
     /**
@@ -182,14 +182,8 @@ public class MemberTimeCardService {
         }
         memberTimeCardLogService.create(accountId, dto.getMemberId(), dto.getOrderNo(), dto.getChangeType(),
                 timeCardTotal, timeCard.getNowTimeCard(), dto.getRemark());
-        // 事务提交后执行
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                // 发送短信通知
-                smsSendNoticeService.timeCardConsumeSms(dto.getMemberId(), dto.getCountedId());
-            }
-        });
+        // 发送短信通知
+        smsSendNoticeService.timeCardConsumeSms(dto.getCountedId());
         return TimeCardChangeVo.builder().code(1).build();
     }
 
@@ -212,14 +206,8 @@ public class MemberTimeCardService {
         }
         memberTimeCardLogService.create(accountId, dto.getMemberId(), dto.getOrderNo(), dto.getChangeType(),
                 dto.getCountedTotal(), timeCard.getNowTimeCard(), dto.getRemark());
-        // 事务提交后执行
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                // 发送短信通知
-                smsSendNoticeService.timeCardConsumeSms(dto.getMemberId(), dto.getCountedId());
-            }
-        });
+        // 发送短信通知
+        smsSendNoticeService.timeCardConsumeSms(dto.getCountedId());
         return TimeCardChangeVo.builder().code(1).build();
     }
 

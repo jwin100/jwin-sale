@@ -848,15 +848,8 @@ public class CashierOrderTradeService {
         cashierOrderService.orderFinish(order.getId());
         // 打印订单小票
         cashierOrderTradeAsyncService.payFinishPrint(order.getId());
-        // 事务提交后执行
-        // TODO 改成同步
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                // 发送短信通知
-                smsSendNoticeService.cashierOrderSend(order.getId());
-            }
-        });
+        // 发送短信通知
+        smsSendNoticeService.cashierOrderSend(order.getId());
     }
 
     /**

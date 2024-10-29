@@ -17,5 +17,7 @@ public class SmsSendRecordDto {
 
     private Integer tempType;
 
+    private LocalDateTime sendTime;
+
     private List<SmsSendUserDto> users = new ArrayList<>();
 }

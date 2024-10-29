@@ -422,14 +422,8 @@ public class CashierRefundTradeService {
         updateOrderRefund(merchantNo, storeNo, refund.getOrderId());
         // 异步调用退款短信通知和打印
         cashierRefundTradeAsyncService.refundSuccessPrint(merchantNo, storeNo, accountId, refundId);
-        // 事务提交后执行
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                // 发送短信通知
-                smsSendNoticeService.cashierRefundSend(refundId);
-            }
-        });
+        // 发送短信通知
+        smsSendNoticeService.cashierRefundSend(refundId);
     }
 
     /**

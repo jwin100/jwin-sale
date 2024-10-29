@@ -127,14 +127,8 @@ public class MemberService {
         memberAssetsService.init(merchantNo, entity.getId(), initRecharge, initIntegral);
         // 修改会员等级
         syncMemberLevel(merchantNo, entity.getId());
-        // 事务提交后执行
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                // 发送短信通知
-                smsSendNoticeService.memberRegisterSend(accountId, entity.getId());
-            }
-        });
+        // 发送短信通知
+        smsSendNoticeService.memberRegisterSend(entity.getId());
         return entity;
     }
 

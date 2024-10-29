@@ -12,6 +12,7 @@ import com.mammon.member.domain.entity.MemberAssetsEntity;
 import com.mammon.member.domain.enums.MemberAssetsCategory;
 import com.mammon.member.domain.enums.MemberAssetsLogType;
 import com.mammon.merchant.service.MerchantStoreService;
+import com.mammon.sms.domain.dto.MemberRechargeNoticeDto;
 import com.mammon.sms.service.SmsSendNoticeService;
 import com.mammon.sms.service.SmsSendService;
 import com.mammon.sms.service.SmsTemplateSettingService;
@@ -152,14 +153,12 @@ public class MemberAssetsService {
         dto.setAfterAssets(afterRecharge);
         dto.setRemark("会员储值");
         memberAssetsLogService.create(dto);
-        // 事务提交后执行
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                // 发送短信通知
-                smsSendNoticeService.memberRechargeSend(memberId, addRecharge, afterRecharge);
-            }
-        });
+        // 发送短信通知
+        MemberRechargeNoticeDto noticeDto = new MemberRechargeNoticeDto();
+        noticeDto.setMemberId(memberId);
+        noticeDto.setChangeRecharge(addRecharge);
+        noticeDto.setAfterRecharge(afterRecharge);
+        smsSendNoticeService.memberRechargeSend(noticeDto);
     }
 
     /**
@@ -252,14 +251,12 @@ public class MemberAssetsService {
         assetsLogDto.setRemark("储值余额变更");
         memberAssetsLogService.create(assetsLogDto);
 
-        // 事务提交后执行
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                // 发送短信通知
-                smsSendNoticeService.memberRechargeChangeSend(dto.getMemberId(), dto.getChangeAmount(), entity.getNowRecharge());
-            }
-        });
+        // 发送短信通知
+        MemberRechargeNoticeDto noticeDto = new MemberRechargeNoticeDto();
+        noticeDto.setMemberId(dto.getMemberId());
+        noticeDto.setChangeRecharge(dto.getChangeAmount());
+        noticeDto.setAfterRecharge(entity.getNowRecharge());
+        smsSendNoticeService.memberRechargeChangeSend(noticeDto);
     }
 
     public MemberAssetsEntity getMemberAssets(String memberId) {

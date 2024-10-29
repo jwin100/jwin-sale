@@ -57,9 +57,6 @@ public class SmsSendService {
     private SmsSignService smsSignService;
 
     @Resource
-    private SmsTemplateService smsTemplateService;
-
-    @Resource
     private SmsSendItemService smsSendItemService;
 
     @Resource
@@ -70,9 +67,6 @@ public class SmsSendService {
 
     @Resource
     private MerchantStoreService merchantStoreService;
-
-    @Resource
-    private SmsSignChannelRelService smsSignChannelRelService;
 
     @Resource
     private SmsTemplateSettingService smsTemplateSettingService;
@@ -119,6 +113,9 @@ public class SmsSendService {
      */
     @Transactional(rollbackFor = Exception.class)
     public void syncSend(long merchantNo, long storeNo, String accountId, SmsSendRecordDto dto) {
+        if (dto.getSendTime() == null) {
+            dto.setSendTime(LocalDateTime.now());
+        }
         SmsSendEntity entity = new SmsSendEntity();
         entity.setId(Generate.generateUUID());
         entity.setMerchantNo(merchantNo);
@@ -130,7 +127,7 @@ public class SmsSendService {
         entity.setTempGroup(makeTempGroup(entity.getMerchantNo()));
         entity.setSendMessage(dto.getSendMessage());
         entity.setStatus(SmsSendStatusEnum.EXAMINE_WAIT.getCode());
-        entity.setSendTime(LocalDateTime.now());
+        entity.setSendTime(dto.getSendTime());
         entity.setCreateTime(LocalDateTime.now());
         entity.setUpdateTime(LocalDateTime.now());
         setSmsRecord(entity, dto);

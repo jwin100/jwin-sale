@@ -9,11 +9,14 @@ import com.mammon.cashier.service.CashierRefundService;
 import com.mammon.clerk.service.AccountService;
 import com.mammon.enums.IEnum;
 import com.mammon.exception.CustomException;
+import com.mammon.member.domain.entity.MemberEntity;
 import com.mammon.member.domain.entity.MemberTimeCardEntity;
 import com.mammon.member.domain.vo.MemberInfoVo;
 import com.mammon.member.service.MemberService;
 import com.mammon.member.service.MemberTimeCardService;
 import com.mammon.merchant.service.MerchantStoreService;
+import com.mammon.sms.domain.dto.MemberCountedNoticeDto;
+import com.mammon.sms.domain.dto.MemberRechargeNoticeDto;
 import com.mammon.sms.domain.dto.SmsSendNoticeDto;
 import com.mammon.sms.domain.dto.SmsSendUserDto;
 import com.mammon.sms.enums.SmsTempTypeEnum;
@@ -24,6 +27,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import javax.annotation.Resource;
 import java.util.Collections;
@@ -62,12 +67,6 @@ import java.util.Map;
 public class SmsSendNoticeService {
 
     @Resource
-    private MerchantStoreService merchantStoreService;
-
-    @Resource
-    private AccountService accountService;
-
-    @Resource
     private MemberService memberService;
 
     @Resource
@@ -91,11 +90,11 @@ public class SmsSendNoticeService {
     /**
      * 会员注册短信通知
      *
-     * @param accountId
      * @param memberId
+     * @TransactionalEventListener 前面事务提交后执行
      */
-    @Async("taskExecutor")
-    public void memberRegisterSend(String accountId, String memberId) {
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void memberRegisterSend(String memberId) {
         MemberInfoVo member = getMember(memberId, SmsTempTypeEnum.MEMBER_REGISTER);
         if (member == null) {
             return;
@@ -109,7 +108,7 @@ public class SmsSendNoticeService {
         SmsSendNoticeDto dto = new SmsSendNoticeDto();
         dto.setMerchantNo(member.getStoreNo());
         dto.setStoreNo(member.getStoreNo());
-        dto.setAccountId(accountId);
+        dto.setAccountId(member.getAccountId());
         dto.setTempType(SmsTempTypeEnum.MEMBER_REGISTER.getCode());
         dto.setUsers(users);
         dto.setTempParams(tempParams);
@@ -119,21 +118,19 @@ public class SmsSendNoticeService {
     /**
      * 会员储值短信通知
      *
-     * @param memberId
-     * @param changeRecharge 储值金额
-     * @param afterRecharge  储值后金额
+     * @param noticeDto
      */
-    @Async("taskExecutor")
-    public void memberRechargeSend(String memberId, long changeRecharge, long afterRecharge) {
-        MemberInfoVo member = getMember(memberId, SmsTempTypeEnum.MEMBER_RECHARGE);
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void memberRechargeSend(MemberRechargeNoticeDto noticeDto) {
+        MemberInfoVo member = getMember(noticeDto.getMemberId(), SmsTempTypeEnum.MEMBER_RECHARGE);
         if (member == null) {
             return;
         }
         // 检查储值变更是否发送短信，积分变更是否发送短信，并发送
         Map<String, String> tempParams = new HashMap<>();
         tempParams.put("shopName", member.getStoreName());
-        tempParams.put("realAmount", AmountUtil.parseYuan(changeRecharge));
-        tempParams.put("surplusAmount", AmountUtil.parseYuan(afterRecharge));
+        tempParams.put("realAmount", AmountUtil.parseYuan(noticeDto.getChangeRecharge()));
+        tempParams.put("surplusAmount", AmountUtil.parseYuan(noticeDto.getAfterRecharge()));
 
         List<SmsSendUserDto> users = Collections.singletonList(new SmsSendUserDto(member.getId(), member.getPhone()));
         SmsSendNoticeDto dto = new SmsSendNoticeDto();
@@ -149,21 +146,19 @@ public class SmsSendNoticeService {
     /**
      * 会员储值金额变更短信通知
      *
-     * @param memberId
-     * @param changeRecharge 储值金额
-     * @param afterRecharge  储值后金额
+     * @param noticeDto
      */
-    @Async("taskExecutor")
-    public void memberRechargeChangeSend(String memberId, long changeRecharge, long afterRecharge) {
-        MemberInfoVo member = getMember(memberId, SmsTempTypeEnum.MEMBER_RECHARGE_CHANGE);
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void memberRechargeChangeSend(MemberRechargeNoticeDto noticeDto) {
+        MemberInfoVo member = getMember(noticeDto.getMemberId(), SmsTempTypeEnum.MEMBER_RECHARGE_CHANGE);
         if (member == null) {
             return;
         }
         // 检查储值变更是否发送短信，积分变更是否发送短信，并发送
         Map<String, String> tempParams = new HashMap<>();
         tempParams.put("shopName", member.getStoreName());
-        tempParams.put("realAmount", AmountUtil.parseYuan(changeRecharge));
-        tempParams.put("surplusAmount", AmountUtil.parseYuan(afterRecharge));
+        tempParams.put("realAmount", AmountUtil.parseYuan(noticeDto.getChangeRecharge()));
+        tempParams.put("surplusAmount", AmountUtil.parseYuan(noticeDto.getAfterRecharge()));
 
         List<SmsSendUserDto> users = Collections.singletonList(new SmsSendUserDto(member.getId(), member.getPhone()));
         SmsSendNoticeDto dto = new SmsSendNoticeDto();
@@ -179,14 +174,11 @@ public class SmsSendNoticeService {
     /**
      * 会员计次开卡
      *
-     * @param memberId     会员id
-     * @param timeCardName 计次卡名
-     * @param addTimeCard  变更次数
-     * @param nowTimeCard  当前剩余
+     * @param noticeDto
      */
-    @Async("taskExecutor")
-    public void memberCountedCreateSend(String memberId, String timeCardName, int addTimeCard, int nowTimeCard) {
-        MemberInfoVo member = getMember(memberId, SmsTempTypeEnum.MEMBER_COUNTED);
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void memberCountedCreateSend(MemberCountedNoticeDto noticeDto) {
+        MemberInfoVo member = getMember(noticeDto.getMemberId(), SmsTempTypeEnum.MEMBER_COUNTED);
         if (member == null) {
             return;
         }
@@ -195,9 +187,9 @@ public class SmsSendNoticeService {
         tempParams.put("memberName", member.getName());
         tempParams.put("memberSex", member.getSex() == 0 ? "女士" : "先生");
         tempParams.put("shopName", member.getStoreName());
-        tempParams.put("timeCardName", timeCardName);
-        tempParams.put("purchaseTimeCard", String.valueOf(addTimeCard));
-        tempParams.put("memberTimeTotal", String.valueOf(nowTimeCard));
+        tempParams.put("timeCardName", noticeDto.getTimeCardName());
+        tempParams.put("purchaseTimeCard", String.valueOf(noticeDto.getAddTimeCard()));
+        tempParams.put("memberTimeTotal", String.valueOf(noticeDto.getNowTimeCard()));
 
         List<SmsSendUserDto> users = Collections.singletonList(new SmsSendUserDto(member.getId(), member.getPhone()));
         SmsSendNoticeDto dto = new SmsSendNoticeDto();
@@ -213,18 +205,17 @@ public class SmsSendNoticeService {
     /**
      * 计次卡变更短信通知
      *
-     * @param memberId
      * @param countedId
      */
-    @Async("taskExecutor")
-    public void timeCardConsumeSms(String memberId, String countedId) {
-        MemberInfoVo member = getMember(memberId, SmsTempTypeEnum.MEMBER_COUNTED_CHANGE);
-        if (member == null) {
-            return;
-        }
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void timeCardConsumeSms(String countedId) {
         MemberTimeCardEntity counted = memberTimeCardService.findById(countedId);
         if (counted == null) {
             log.info("计次卡信息获取错误.memberId:{}", counted);
+            return;
+        }
+        MemberInfoVo member = getMember(counted.getMemberId(), SmsTempTypeEnum.MEMBER_COUNTED_CHANGE);
+        if (member == null) {
             return;
         }
         Map<String, String> tempParams = new HashMap<>();
@@ -249,7 +240,7 @@ public class SmsSendNoticeService {
      *
      * @param orderId
      */
-    @Async("taskExecutor")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void cashierOrderSend(String orderId) {
         CashierOrderDetailVo order = cashierOrderService.findDetailById(orderId);
         if (order == null || StringUtils.isBlank(order.getMemberId())) {
@@ -291,7 +282,7 @@ public class SmsSendNoticeService {
      *
      * @param refundId
      */
-    @Async("taskExecutor")
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void cashierRefundSend(String refundId) {
         CashierRefundDetailVo refund = cashierRefundService.findById(refundId);
         if (refund == null || StringUtils.isBlank(refund.getMemberId())) {
