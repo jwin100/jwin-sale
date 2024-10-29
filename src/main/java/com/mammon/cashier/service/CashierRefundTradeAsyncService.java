@@ -61,7 +61,7 @@ public class CashierRefundTradeAsyncService {
      * @param refundPays
      * @return
      */
-    @Async
+    @Async("taskExecutor")
     public void tradeRefund(String accountId, CashierRefundEntity refund,
                             List<CashierRefundPayEntity> refundPays) {
         for (CashierRefundPayEntity refundPay : refundPays) {
@@ -146,7 +146,7 @@ public class CashierRefundTradeAsyncService {
         }
     }
 
-    @Async
+    @Async("taskExecutor")
     public void refundSuccessPrint(long merchantNo, long storeNo, String accountId, String refundId) {
         CashierRefundDetailVo refund = cashierRefundService.findById(refundId);
         if (refund == null) {

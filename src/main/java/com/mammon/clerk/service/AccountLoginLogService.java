@@ -17,7 +17,7 @@ public class AccountLoginLogService {
     @Resource
     private AccountLoginLogDao accountLoginLogDao;
 
-    @Async
+    @Async("taskExecutor")
     public void save(HttpServletRequest request, String accountId, int type, LocalDateTime loginTime, int platform) {
         String ip = IpUtil.getIpAddress(request);
         String userAgent = request.getHeader("User-Agent");

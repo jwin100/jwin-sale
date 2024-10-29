@@ -94,7 +94,7 @@ public class SmsSendNoticeService {
      * @param accountId
      * @param memberId
      */
-    @Async
+    @Async("taskExecutor")
     public void memberRegisterSend(String accountId, String memberId) {
         MemberInfoVo member = getMember(memberId, SmsTempTypeEnum.MEMBER_REGISTER);
         if (member == null) {
@@ -123,7 +123,7 @@ public class SmsSendNoticeService {
      * @param changeRecharge 储值金额
      * @param afterRecharge  储值后金额
      */
-    @Async
+    @Async("taskExecutor")
     public void memberRechargeSend(String memberId, long changeRecharge, long afterRecharge) {
         MemberInfoVo member = getMember(memberId, SmsTempTypeEnum.MEMBER_RECHARGE);
         if (member == null) {
@@ -153,7 +153,7 @@ public class SmsSendNoticeService {
      * @param changeRecharge 储值金额
      * @param afterRecharge  储值后金额
      */
-    @Async
+    @Async("taskExecutor")
     public void memberRechargeChangeSend(String memberId, long changeRecharge, long afterRecharge) {
         MemberInfoVo member = getMember(memberId, SmsTempTypeEnum.MEMBER_RECHARGE_CHANGE);
         if (member == null) {
@@ -184,7 +184,7 @@ public class SmsSendNoticeService {
      * @param addTimeCard  变更次数
      * @param nowTimeCard  当前剩余
      */
-    @Async
+    @Async("taskExecutor")
     public void memberCountedCreateSend(String memberId, String timeCardName, int addTimeCard, int nowTimeCard) {
         MemberInfoVo member = getMember(memberId, SmsTempTypeEnum.MEMBER_COUNTED);
         if (member == null) {
@@ -216,7 +216,7 @@ public class SmsSendNoticeService {
      * @param memberId
      * @param countedId
      */
-    @Async
+    @Async("taskExecutor")
     public void timeCardConsumeSms(String memberId, String countedId) {
         MemberInfoVo member = getMember(memberId, SmsTempTypeEnum.MEMBER_COUNTED_CHANGE);
         if (member == null) {
@@ -249,7 +249,7 @@ public class SmsSendNoticeService {
      *
      * @param orderId
      */
-    @Async
+    @Async("taskExecutor")
     public void cashierOrderSend(String orderId) {
         CashierOrderDetailVo order = cashierOrderService.findDetailById(orderId);
         if (order == null || StringUtils.isBlank(order.getMemberId())) {
@@ -291,7 +291,7 @@ public class SmsSendNoticeService {
      *
      * @param refundId
      */
-    @Async
+    @Async("taskExecutor")
     public void cashierRefundSend(String refundId) {
         CashierRefundDetailVo refund = cashierRefundService.findById(refundId);
         if (refund == null || StringUtils.isBlank(refund.getMemberId())) {

@@ -26,7 +26,7 @@ public class CashierOrderTradeAsyncService {
         this.cashierOrderService = cashierOrderService;
     }
 
-    @Async
+    @Async("taskExecutor")
     public void payFinishPrint(String orderId) {
         try {
             cashierOrderService.orderPrint(orderId);

@@ -77,7 +77,7 @@ public class SummaryAccountService {
      *
      * @param yesterday
      */
-    @Async
+    @Async("taskExecutor")
     @Transactional(rollbackFor = Exception.class)
     public void yesterdaySummary(LocalDate yesterday) {
         MerchantQuery query = new MerchantQuery();
