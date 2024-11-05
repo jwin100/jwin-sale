@@ -87,13 +87,6 @@ public class SmsSendNoticeService {
     @Lazy
     private CashierRefundService cashierRefundService;
 
-    /**
-     * 会员注册短信通知
-     *
-     * @param memberId
-     * @TransactionalEventListener 前面事务提交后执行
-     */
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void memberRegisterSend(String memberId) {
         MemberInfoVo member = getMember(memberId, SmsTempTypeEnum.MEMBER_REGISTER);
         if (member == null) {
@@ -106,7 +99,7 @@ public class SmsSendNoticeService {
 
         List<SmsSendUserDto> users = Collections.singletonList(new SmsSendUserDto(member.getId(), member.getPhone()));
         SmsSendNoticeDto dto = new SmsSendNoticeDto();
-        dto.setMerchantNo(member.getStoreNo());
+        dto.setMerchantNo(member.getMerchantNo());
         dto.setStoreNo(member.getStoreNo());
         dto.setAccountId(member.getAccountId());
         dto.setTempType(SmsTempTypeEnum.MEMBER_REGISTER.getCode());
@@ -120,7 +113,6 @@ public class SmsSendNoticeService {
      *
      * @param noticeDto
      */
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void memberRechargeSend(MemberRechargeNoticeDto noticeDto) {
         MemberInfoVo member = getMember(noticeDto.getMemberId(), SmsTempTypeEnum.MEMBER_RECHARGE);
         if (member == null) {
@@ -148,7 +140,6 @@ public class SmsSendNoticeService {
      *
      * @param noticeDto
      */
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void memberRechargeChangeSend(MemberRechargeNoticeDto noticeDto) {
         MemberInfoVo member = getMember(noticeDto.getMemberId(), SmsTempTypeEnum.MEMBER_RECHARGE_CHANGE);
         if (member == null) {
@@ -171,12 +162,6 @@ public class SmsSendNoticeService {
         smsSend(dto);
     }
 
-    /**
-     * 会员计次开卡
-     *
-     * @param noticeDto
-     */
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void memberCountedCreateSend(MemberCountedNoticeDto noticeDto) {
         MemberInfoVo member = getMember(noticeDto.getMemberId(), SmsTempTypeEnum.MEMBER_COUNTED);
         if (member == null) {
@@ -207,7 +192,6 @@ public class SmsSendNoticeService {
      *
      * @param countedId
      */
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void timeCardConsumeSms(String countedId) {
         MemberTimeCardEntity counted = memberTimeCardService.findById(countedId);
         if (counted == null) {
@@ -240,7 +224,6 @@ public class SmsSendNoticeService {
      *
      * @param orderId
      */
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void cashierOrderSend(String orderId) {
         CashierOrderDetailVo order = cashierOrderService.findDetailById(orderId);
         if (order == null || StringUtils.isBlank(order.getMemberId())) {
@@ -282,7 +265,6 @@ public class SmsSendNoticeService {
      *
      * @param refundId
      */
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void cashierRefundSend(String refundId) {
         CashierRefundDetailVo refund = cashierRefundService.findById(refundId);
         if (refund == null || StringUtils.isBlank(refund.getMemberId())) {

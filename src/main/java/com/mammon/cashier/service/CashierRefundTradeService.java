@@ -16,6 +16,7 @@ import com.mammon.member.domain.entity.MemberAttrEntity;
 import com.mammon.member.service.MemberAssetsService;
 import com.mammon.member.service.MemberAttrService;
 import com.mammon.member.service.MemberTimeCardService;
+import com.mammon.payment.domain.enums.PayModeConst;
 import com.mammon.sms.service.SmsSendNoticeService;
 import com.mammon.stock.service.StockSkuService;
 import com.mammon.utils.AmountUtil;
@@ -25,6 +26,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.CollectionUtils;
@@ -420,8 +423,26 @@ public class CashierRefundTradeService {
         refundUnActive(order, refund);
         // 同步修改对应销售订单中退款信息
         updateOrderRefund(merchantNo, storeNo, refund.getOrderId());
+        refundFinish(refundId);
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void refundFinish(String refundId) {
         // 异步调用退款短信通知和打印
-        cashierRefundTradeAsyncService.refundSuccessPrint(merchantNo, storeNo, accountId, refundId);
+        CashierRefundDetailVo refund = cashierRefundService.findById(refundId);
+        if (refund == null) {
+            return;
+        }
+        // 退成功执行
+        if (refund.getPays().stream().anyMatch(x -> x.getPayCode() == PayModeConst.payModeTimeCard.getCode())) {
+            // 计次卡退款暂时不打印小票和不发短信
+            return;
+        }
+        try {
+            cashierRefundService.refundPrint(refund.getMerchantNo(), refund.getOperationId(), refundId);
+        } catch (CustomException e) {
+            log.error("打印失败:{}", e.getResultJson());
+        }
         // 发送短信通知
         smsSendNoticeService.cashierRefundSend(refundId);
     }

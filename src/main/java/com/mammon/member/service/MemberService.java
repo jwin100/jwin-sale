@@ -47,6 +47,8 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.CollectionUtils;
@@ -127,9 +129,14 @@ public class MemberService {
         memberAssetsService.init(merchantNo, entity.getId(), initRecharge, initIntegral);
         // 修改会员等级
         syncMemberLevel(merchantNo, entity.getId());
-        // 发送短信通知
-        smsSendNoticeService.memberRegisterSend(entity.getId());
+        afterMember(entity.getId());
         return entity;
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void afterMember(String memberId) {
+        // 发送短信通知
+        smsSendNoticeService.memberRegisterSend(memberId);
     }
 
     @Transactional(rollbackFor = CustomException.class)

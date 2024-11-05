@@ -35,7 +35,7 @@ public class SmsTemplateSettingService {
         List<SmsTemplateEntity> list = smsTemplateService.findAllDefaultStatus(merchantNo);
         deleteAll(merchantNo);
         return list.stream()
-                .map(x -> save(merchantNo, x.getSmsType(), x.getId(), CommonStatus.ENABLED.getCode()))
+                .map(x -> save(merchantNo, x.getTempType(), x.getId(), CommonStatus.ENABLED.getCode()))
                 .collect(Collectors.toList());
     }
 

@@ -48,6 +48,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
@@ -113,9 +115,6 @@ public class CashierOrderTradeService {
 
     @Resource
     private MemberAssetsService memberAssetsService;
-
-    @Resource
-    private CashierOrderTradeAsyncService cashierOrderTradeAsyncService;
 
     @Resource
     private SmsSendNoticeService smsSendNoticeService;
@@ -846,10 +845,18 @@ public class CashierOrderTradeService {
         orderActive(order);
         // 更新订单已完成状态
         cashierOrderService.orderFinish(order.getId());
-        // 打印订单小票
-        cashierOrderTradeAsyncService.payFinishPrint(order.getId());
+        orderFinish(order.getId());
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void orderFinish(String orderId) {
+        try {
+            cashierOrderService.orderPrint(orderId);
+        } catch (CustomException e) {
+            log.error("打印失败：{}", e.getResultJson());
+        }
         // 发送短信通知
-        smsSendNoticeService.cashierOrderSend(order.getId());
+        smsSendNoticeService.cashierOrderSend(orderId);
     }
 
     /**

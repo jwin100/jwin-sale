@@ -24,6 +24,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.CollectionUtils;
@@ -121,8 +123,15 @@ public class MemberTimeCardService {
             timeCard.setUpdateTime(LocalDateTime.now());
             timeCard = save(timeCard);
         }
-        memberTimeCardLogService.create(accountId, memberId, orderNo, 1, addTimeCard,
-                timeCard.getNowTimeCard(), "购买计次卡");
+        MemberTimeCardLogDto dto = new MemberTimeCardLogDto();
+        dto.setAccountId(accountId);
+        dto.setMemberId(memberId);
+        dto.setOrderNo(orderNo);
+        dto.setChangeType(1);
+        dto.setTimeTotal(addTimeCard);
+        dto.setChangeAfter(timeCard.getNowTimeCard());
+        dto.setRemark("购买计次卡");
+        memberTimeCardLogService.create(dto);
         // 事务提交后执行
         // 发送短信通知
         MemberCountedNoticeDto noticeDto = new MemberCountedNoticeDto();
@@ -130,6 +139,19 @@ public class MemberTimeCardService {
         noticeDto.setTimeCardName(timeCard.getName());
         noticeDto.setAddTimeCard(addTimeCard);
         noticeDto.setNowTimeCard(timeCard.getNowTimeCard());
+        smsSendNoticeService.memberCountedCreateSend(noticeDto);
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void countedChange(MemberTimeCardLogDto dto) {
+        memberTimeCardLogService.create(dto);
+        // 事务提交后执行
+        // 发送短信通知
+        MemberCountedNoticeDto noticeDto = new MemberCountedNoticeDto();
+        noticeDto.setMemberId(dto.getMemberId());
+        noticeDto.setTimeCardName(noticeDto.getTimeCardName());
+        noticeDto.setAddTimeCard((int) dto.getTimeTotal());
+        noticeDto.setNowTimeCard(dto.getChangeType());
         smsSendNoticeService.memberCountedCreateSend(noticeDto);
     }
 
@@ -152,8 +174,15 @@ public class MemberTimeCardService {
         }
         int addTimeCard = timeCardRule.getTimeTotal() * quantity.intValue();
         timeCard = edit(timeCard.getId(), memberId, -addTimeCard);
-        memberTimeCardLogService.create(accountId, memberId, refundNo, 1,
-                -addTimeCard, timeCard.getNowTimeCard(), "计次卡退款");
+        MemberTimeCardLogDto dto = new MemberTimeCardLogDto();
+        dto.setAccountId(accountId);
+        dto.setMemberId(memberId);
+        dto.setOrderNo(refundNo);
+        dto.setChangeType(1);
+        dto.setTimeTotal(-addTimeCard);
+        dto.setChangeAfter(timeCard.getNowTimeCard());
+        dto.setRemark("计次卡退款");
+        memberTimeCardLogService.create(dto);
     }
 
     /**
@@ -180,11 +209,25 @@ public class MemberTimeCardService {
         if (timeCard == null) {
             return TimeCardChangeVo.builder().message("计次卡核销失败").build();
         }
-        memberTimeCardLogService.create(accountId, dto.getMemberId(), dto.getOrderNo(), dto.getChangeType(),
-                timeCardTotal, timeCard.getNowTimeCard(), dto.getRemark());
-        // 发送短信通知
-        smsSendNoticeService.timeCardConsumeSms(dto.getCountedId());
+
+        MemberTimeCardLogDto logDto = new MemberTimeCardLogDto();
+        logDto.setCountedId(dto.getCountedId());
+        logDto.setAccountId(accountId);
+        logDto.setMemberId(dto.getMemberId());
+        logDto.setOrderNo(dto.getOrderNo());
+        logDto.setChangeType(dto.getChangeType());
+        logDto.setTimeTotal(timeCardTotal);
+        logDto.setChangeAfter(timeCard.getNowTimeCard());
+        logDto.setRemark(dto.getRemark());
+        afterCountedChange(logDto);
         return TimeCardChangeVo.builder().code(1).build();
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void afterCountedChange(MemberTimeCardLogDto logDto) {
+        memberTimeCardLogService.create(logDto);
+        // 发送短信通知
+        smsSendNoticeService.timeCardConsumeSms(logDto.getCountedId());
     }
 
     /**
@@ -204,10 +247,19 @@ public class MemberTimeCardService {
         if (timeCard == null) {
             return TimeCardChangeVo.builder().message("计次卡退款失败").build();
         }
-        memberTimeCardLogService.create(accountId, dto.getMemberId(), dto.getOrderNo(), dto.getChangeType(),
-                dto.getCountedTotal(), timeCard.getNowTimeCard(), dto.getRemark());
+
+        MemberTimeCardLogDto logDto = new MemberTimeCardLogDto();
+        logDto.setCountedId(dto.getCountedId());
+        logDto.setAccountId(accountId);
+        logDto.setMemberId(dto.getMemberId());
+        logDto.setOrderNo(dto.getOrderNo());
+        logDto.setChangeType(dto.getChangeType());
+        logDto.setTimeTotal(dto.getCountedTotal());
+        logDto.setChangeAfter(timeCard.getNowTimeCard());
+        logDto.setRemark(dto.getRemark());
+        memberTimeCardLogService.create(logDto);
         // 发送短信通知
-        smsSendNoticeService.timeCardConsumeSms(dto.getCountedId());
+        afterCountedChange(logDto);
         return TimeCardChangeVo.builder().code(1).build();
     }
 

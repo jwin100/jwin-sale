@@ -95,10 +95,7 @@ public class SmsDao {
         String sql = sb.toString();
 
         RowMapper<SmsEntity> rowMapper = new BeanPropertyRowMapper<>(SmsEntity.class);
-        List<SmsEntity> store = namedParameterJdbcTemplate.query(sql, params, rowMapper);
-        if (store.iterator().hasNext()) {
-            return store.get(0);
-        }
-        return null;
+        List<SmsEntity> list = namedParameterJdbcTemplate.query(sql, params, rowMapper);
+        return list.stream().findFirst().orElse(null);
     }
 }

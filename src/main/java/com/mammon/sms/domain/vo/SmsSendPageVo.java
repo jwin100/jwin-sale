@@ -1,5 +1,7 @@
 package com.mammon.sms.domain.vo;
 
+import com.mammon.enums.IEnum;
+import com.mammon.sms.enums.SmsSendStatusEnum;
 import com.mammon.sms.enums.SmsTypeEnum;
 import com.mammon.sms.enums.SmsTempTypeEnum;
 import lombok.Data;
@@ -77,6 +79,8 @@ public class SmsSendPageVo {
      */
     private int status;
 
+    private String statusName;
+
     /**
      * 失败表述
      */
@@ -91,4 +95,8 @@ public class SmsSendPageVo {
      * 提交日期
      */
     private LocalDateTime createTime;
+
+    public String getStatusName() {
+        return IEnum.getNameByCode(this.getStatus(), SmsSendStatusEnum.class);
+    }
 }

@@ -4,6 +4,7 @@ import com.mammon.common.Generate;
 import com.mammon.common.PageResult;
 import com.mammon.common.PageVo;
 import com.mammon.member.dao.MemberTimeCardLogDao;
+import com.mammon.member.domain.dto.MemberTimeCardLogDto;
 import com.mammon.member.domain.dto.MemberTimeCardLogQuery;
 import com.mammon.member.domain.entity.MemberTimeCardLogEntity;
 import com.mammon.member.domain.vo.MemberTimeCardLogPageVo;
@@ -21,17 +22,16 @@ public class MemberTimeCardLogService {
     @Resource
     private MemberTimeCardLogDao memberTimeCardLogDao;
 
-    public int create(String accountId, String memberId, String orderNo, int changeType,
-                      long timeTotal, long changeAfter, String remark) {
+    public int create(MemberTimeCardLogDto dto) {
         MemberTimeCardLogEntity entity = new MemberTimeCardLogEntity();
         entity.setId(Generate.generateUUID());
-        entity.setMemberId(memberId);
-        entity.setChangeType(changeType);
-        entity.setChangeTotal(timeTotal);
-        entity.setChangeAfter(changeAfter);
-        entity.setRemark(remark);
-        entity.setOrderNo(orderNo);
-        entity.setAccountId(accountId);
+        entity.setMemberId(dto.getMemberId());
+        entity.setChangeType(dto.getChangeType());
+        entity.setChangeTotal(dto.getTimeTotal());
+        entity.setChangeAfter(dto.getChangeAfter());
+        entity.setRemark(dto.getRemark());
+        entity.setOrderNo(dto.getOrderNo());
+        entity.setAccountId(dto.getAccountId());
         entity.setCreateTime(LocalDateTime.now());
         entity.setUpdateTime(LocalDateTime.now());
         return memberTimeCardLogDao.save(entity);

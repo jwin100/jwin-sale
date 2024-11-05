@@ -145,22 +145,4 @@ public class CashierRefundTradeAsyncService {
             cashierRefundService.refundFinish(refundId);
         }
     }
-
-    @Async("taskExecutor")
-    public void refundSuccessPrint(long merchantNo, long storeNo, String accountId, String refundId) {
-        CashierRefundDetailVo refund = cashierRefundService.findById(refundId);
-        if (refund == null) {
-            return;
-        }
-        // 退成功执行
-        if (refund.getPays().stream().anyMatch(x -> x.getPayCode() == PayModeConst.payModeTimeCard.getCode())) {
-            // 计次卡退款暂时不打印小票和不发短信
-            return;
-        }
-        try {
-            cashierRefundService.refundPrint(merchantNo, accountId, refundId);
-        } catch (CustomException e) {
-            log.error("打印失败:{}", e.getResultJson());
-        }
-    }
 }

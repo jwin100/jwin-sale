@@ -21,6 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
@@ -152,12 +154,17 @@ public class MemberAssetsService {
         dto.setChangeAssets(addRecharge);
         dto.setAfterAssets(afterRecharge);
         dto.setRemark("会员储值");
+        afterRecharge(dto);
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void afterRecharge(MemberAssetsLogDto dto) {
         memberAssetsLogService.create(dto);
         // 发送短信通知
         MemberRechargeNoticeDto noticeDto = new MemberRechargeNoticeDto();
-        noticeDto.setMemberId(memberId);
-        noticeDto.setChangeRecharge(addRecharge);
-        noticeDto.setAfterRecharge(afterRecharge);
+        noticeDto.setMemberId(dto.getMemberId());
+        noticeDto.setChangeRecharge(dto.getChangeAssets());
+        noticeDto.setAfterRecharge(dto.getAfterAssets());
         smsSendNoticeService.memberRechargeSend(noticeDto);
     }
 
@@ -249,13 +256,18 @@ public class MemberAssetsService {
         assetsLogDto.setChangeAssets(dto.getChangeAmount());
         assetsLogDto.setAfterAssets(entity.getNowRecharge());
         assetsLogDto.setRemark("储值余额变更");
+        afterRechargeChange(assetsLogDto);
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMPLETION)
+    public void afterRechargeChange(MemberAssetsLogDto assetsLogDto) {
         memberAssetsLogService.create(assetsLogDto);
 
         // 发送短信通知
         MemberRechargeNoticeDto noticeDto = new MemberRechargeNoticeDto();
-        noticeDto.setMemberId(dto.getMemberId());
-        noticeDto.setChangeRecharge(dto.getChangeAmount());
-        noticeDto.setAfterRecharge(entity.getNowRecharge());
+        noticeDto.setMemberId(assetsLogDto.getMemberId());
+        noticeDto.setChangeRecharge(assetsLogDto.getChangeAssets());
+        noticeDto.setAfterRecharge(assetsLogDto.getAfterAssets());
         smsSendNoticeService.memberRechargeChangeSend(noticeDto);
     }
 
