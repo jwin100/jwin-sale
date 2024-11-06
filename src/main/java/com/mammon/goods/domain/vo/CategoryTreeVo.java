@@ -13,6 +13,8 @@ public class CategoryTreeVo {
 
     private String label;
 
+    private String pid;
+
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<CategoryTreeVo> children;
 }

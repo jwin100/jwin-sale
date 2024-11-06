@@ -182,12 +182,14 @@ public class CategoryService {
                 CategoryTreeVo childrenVo = new CategoryTreeVo();
                 childrenVo.setValue(children.getId());
                 childrenVo.setLabel(children.getName());
+                childrenVo.setPid(children.getPid());
                 return childrenVo;
             }).collect(Collectors.toList());
 
             CategoryTreeVo vo = new CategoryTreeVo();
             vo.setValue(x.getId());
             vo.setLabel(x.getName());
+            vo.setPid(x.getPid());
 
             if (CollUtil.isNotEmpty(childrenes)) {
                 vo.setChildren(childrenes);
