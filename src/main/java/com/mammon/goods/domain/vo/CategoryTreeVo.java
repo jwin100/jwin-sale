@@ -15,6 +15,8 @@ public class CategoryTreeVo {
 
     private String pid;
 
+    private int sort;
+
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<CategoryTreeVo> children;
 }

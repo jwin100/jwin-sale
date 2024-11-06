@@ -183,6 +183,7 @@ public class CategoryService {
                 childrenVo.setValue(children.getId());
                 childrenVo.setLabel(children.getName());
                 childrenVo.setPid(children.getPid());
+                childrenVo.setSort(children.getSort());
                 return childrenVo;
             }).collect(Collectors.toList());
 
@@ -190,6 +191,7 @@ public class CategoryService {
             vo.setValue(x.getId());
             vo.setLabel(x.getName());
             vo.setPid(x.getPid());
+            vo.setSort(x.getSort());
 
             if (CollUtil.isNotEmpty(childrenes)) {
                 vo.setChildren(childrenes);
