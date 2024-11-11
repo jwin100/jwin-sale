@@ -93,6 +93,17 @@ public class CategoryService {
         categoryDao.update(entity);
     }
 
+    public void editSort(long merchantNo, String id, CategoryDto dto){
+        CategoryEntity entity = categoryDao.findById(merchantNo, id);
+        if (entity == null) {
+            return;
+        }
+        entity.setId(id);
+        entity.setSort(dto.getSort());
+        entity.setUpdateTime(LocalDateTime.now());
+        categoryDao.update(entity);
+    }
+
     @Transactional(rollbackFor = Exception.class)
     public void categoryImport(long merchantNo, MultipartFile file) {
         List<CategoryImportDto> list = ExcelUtils.read(file, CategoryImportDto.class);

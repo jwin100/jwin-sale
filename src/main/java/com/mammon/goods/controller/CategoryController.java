@@ -51,6 +51,16 @@ public class CategoryController {
         return ResultJson.ok();
     }
 
+    @PutMapping("/sort/{id}")
+    public ResultJson<Void> editSort(@RequestHeader long merchantNo,
+                                     @RequestHeader long storeNo,
+                                     @RequestHeader String accountId,
+                                     @PathVariable("id") String id,
+                                     @RequestBody CategoryDto dto) {
+        categoryService.editSort(merchantNo, id, dto);
+        return ResultJson.ok();
+    }
+
     @DeleteMapping("/{id}")
     public ResultJson<Void> deleteById(@RequestHeader long merchantNo,
                                        @RequestHeader long storeNo,
