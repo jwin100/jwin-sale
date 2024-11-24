@@ -29,8 +29,13 @@ public class SkuSpecService {
 
     @Transactional(rollbackFor = Exception.class)
     public void batchSave(String spuId, String skuId, List<SkuSpecDto> dtos) {
+        List<SkuSpecVo> list = findAllBySkuId(skuId);
         dtos.forEach(x -> {
-            save(spuId, skuId, x);
+            SkuSpecVo skuSpecVo = list.stream().filter(y -> y.getSpecValueId().equals(x.getSpecValueId()))
+                    .findFirst().orElse(null);
+            if (skuSpecVo == null) {
+                save(spuId, skuId, x);
+            }
         });
     }
 

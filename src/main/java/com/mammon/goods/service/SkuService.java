@@ -133,7 +133,9 @@ public class SkuService {
         entity.setSkuWeight(QuantityUtil.parse(dto.getSkuWeight()));
         entity.setJoinSpec(joinSpec);
         skuDao.update(entity);
-
+        if (!CollectionUtils.isEmpty(dto.getSpecs())) {
+            skuSpecService.batchSave(entity.getSpuId(), entity.getId(), dto.getSpecs());
+        }
         StockSkuDto stockSkuDto = new StockSkuDto();
         BeanUtils.copyProperties(entity, stockSkuDto);
         stockSkuDto.setSpuId(sku.getSpuId());
