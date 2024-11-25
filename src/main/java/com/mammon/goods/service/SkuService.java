@@ -49,7 +49,7 @@ public class SkuService {
 
     @Transactional(rollbackFor = Exception.class)
     public List<StockSkuDto> batchEdit(long merchantNo, String spuId, List<SkuDto> skuDtos) {
-        //删除sku
+        //获取原sku
         List<SkuEntity> skus = skuDao.findAllBySpuId(spuId);
 
         // 获取要删除的skuId
@@ -60,6 +60,7 @@ public class SkuService {
                 deleteSkuIds.add(x.getId());
             }
         });
+        // 删除
         deleteSkuIds.forEach(x -> {
             delete(x);
             skuSpecService.deleteBySkuId(x);
@@ -134,7 +135,7 @@ public class SkuService {
         entity.setJoinSpec(joinSpec);
         skuDao.update(entity);
         if (!CollectionUtils.isEmpty(dto.getSpecs())) {
-            skuSpecService.batchSave(entity.getSpuId(), entity.getId(), dto.getSpecs());
+            skuSpecService.batchSave(sku.getSpuId(), sku.getId(), dto.getSpecs());
         }
         StockSkuDto stockSkuDto = new StockSkuDto();
         BeanUtils.copyProperties(entity, stockSkuDto);

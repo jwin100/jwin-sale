@@ -6,6 +6,7 @@ import com.mammon.goods.dao.SkuSpecDao;
 import com.mammon.goods.domain.dto.SkuSpecDto;
 import com.mammon.goods.domain.entity.SkuSpecEntity;
 import com.mammon.goods.domain.vo.SkuSpecVo;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
  * @date 2023-03-22 16:56:33
  */
 @Service
+@Slf4j
 public class SkuSpecService {
 
     @Resource
@@ -34,6 +36,7 @@ public class SkuSpecService {
             SkuSpecVo skuSpecVo = list.stream().filter(y -> y.getSpecValueId().equals(x.getSpecValueId()))
                     .findFirst().orElse(null);
             if (skuSpecVo == null) {
+                log.info("保存商品规格信息：spu:{},sku:{}", spuId, skuId);
                 save(spuId, skuId, x);
             }
         });
