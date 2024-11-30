@@ -1,6 +1,7 @@
 package com.mammon.goods.service;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.mammon.common.Generate;
 import com.mammon.common.PageVo;
 import com.mammon.enums.CommonStatus;
@@ -21,6 +22,7 @@ import com.mammon.goods.domain.query.SpuQuery;
 import com.mammon.leaf.service.LeafCodeService;
 import com.mammon.merchant.domain.entity.MerchantStoreEntity;
 import com.mammon.merchant.service.MerchantStoreService;
+import com.mammon.service.RedisService;
 import com.mammon.stock.dao.StockSkuDao;
 import com.mammon.stock.domain.dto.StockSkuDto;
 import com.mammon.stock.domain.dto.StockSpuDto;
@@ -43,6 +45,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -84,6 +87,8 @@ public class SpuService {
     private StockSkuService stockSkuService;
     @Autowired
     private StockSkuDao stockSkuDao;
+    @Autowired
+    private RedisService redisService;
 
     @Transactional(rollbackFor = Exception.class)
     public void create(long merchantNo, String accountId, SpuDto dto) {
@@ -118,19 +123,23 @@ public class SpuService {
         entity.setCreateTime(LocalDateTime.now());
         entity.setUpdateTime(LocalDateTime.now());
         spuDao.save(entity);
-        // 批量保存sku信息
-        List<StockSkuDto> skus = skuService.batchEdit(merchantNo, entity.getId(), dto.getSkus());
 
-        // 商品资料，门店库存更新到库存表中
-        StockSpuDto stockSpuDto = new StockSpuDto();
-        BeanUtils.copyProperties(entity, stockSpuDto);
-        stockSpuDto.setSpuId(entity.getId());
-        stockSpuDto.setSyncStoreNo(dto.getSyncStoreNo());
-        stockSpuDto.setStatus(entity.getStatus());
-        stockSpuDto.setSkus(skus);
-        stockSpuService.batchEdit(merchantNo, stockSpuDto);
+        if (CollUtil.isNotEmpty(dto.getSkus())) {
+            // 批量保存sku信息
+            List<StockSkuDto> skus = skuService.batchEdit(merchantNo, entity.getId(), dto.getSkus());
+
+            // 商品资料，门店库存更新到库存表中
+            StockSpuDto stockSpuDto = new StockSpuDto();
+            BeanUtils.copyProperties(entity, stockSpuDto);
+            stockSpuDto.setSpuId(entity.getId());
+            stockSpuDto.setSyncStoreNo(dto.getSyncStoreNo());
+            stockSpuDto.setStatus(entity.getStatus());
+            stockSpuDto.setSkus(skus);
+            stockSpuService.batchEdit(merchantNo, stockSpuDto);
+        }
+        String key = "spu:syncStoreNo:" + entity.getId();
+        redisService.set(key, String.valueOf(dto.getSyncStoreNo()), 8, TimeUnit.HOURS);
     }
-
 
     @Transactional(rollbackFor = Exception.class)
     public void edit(long merchantNo, String accountId, String id, SpuDto dto) {
