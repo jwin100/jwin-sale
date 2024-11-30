@@ -81,13 +81,17 @@ public class SpuService {
 
     @Resource
     private StockSpuService stockSpuService;
-    @Autowired
+
+    @Resource
     private SkuDao skuDao;
-    @Autowired
+
+    @Resource
     private StockSkuService stockSkuService;
-    @Autowired
+
+    @Resource
     private StockSkuDao stockSkuDao;
-    @Autowired
+
+    @Resource
     private RedisService redisService;
 
     @Transactional(rollbackFor = Exception.class)
@@ -124,21 +128,17 @@ public class SpuService {
         entity.setUpdateTime(LocalDateTime.now());
         spuDao.save(entity);
 
-        if (CollUtil.isNotEmpty(dto.getSkus())) {
-            // 批量保存sku信息
-            List<StockSkuDto> skus = skuService.batchEdit(merchantNo, entity.getId(), dto.getSkus());
+        // 批量保存sku信息
+        List<StockSkuDto> skus = skuService.batchEdit(merchantNo, entity.getId(), dto.getSkus());
 
-            // 商品资料，门店库存更新到库存表中
-            StockSpuDto stockSpuDto = new StockSpuDto();
-            BeanUtils.copyProperties(entity, stockSpuDto);
-            stockSpuDto.setSpuId(entity.getId());
-            stockSpuDto.setSyncStoreNo(dto.getSyncStoreNo());
-            stockSpuDto.setStatus(entity.getStatus());
-            stockSpuDto.setSkus(skus);
-            stockSpuService.batchEdit(merchantNo, stockSpuDto);
-        }
-        String key = "spu:syncStoreNo:" + entity.getId();
-        redisService.set(key, String.valueOf(dto.getSyncStoreNo()), 8, TimeUnit.HOURS);
+        // 商品资料，门店库存更新到库存表中
+        StockSpuDto stockSpuDto = new StockSpuDto();
+        BeanUtils.copyProperties(entity, stockSpuDto);
+        stockSpuDto.setSpuId(entity.getId());
+        stockSpuDto.setSyncStoreNo(dto.getSyncStoreNo());
+        stockSpuDto.setStatus(entity.getStatus());
+        stockSpuDto.setSkus(skus);
+        stockSpuService.batchEdit(merchantNo, stockSpuDto);
     }
 
     @Transactional(rollbackFor = Exception.class)

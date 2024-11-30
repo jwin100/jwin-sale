@@ -56,11 +56,8 @@ public class SkuService {
 
     @Resource
     private LeafCodeService leafCodeService;
+    
     @Resource
-    private RedisService redisService;
-    @Resource
-    private StockSpuService stockSpuService;
-    @Autowired
     private SpuDao spuDao;
 
     @Transactional(rollbackFor = Exception.class)
