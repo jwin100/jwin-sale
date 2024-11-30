@@ -1,15 +1,19 @@
 package com.mammon.goods.service;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.mammon.common.Generate;
 import com.mammon.enums.CommonStatus;
 import com.mammon.exception.CustomException;
 import com.mammon.goods.dao.SkuDao;
+import com.mammon.goods.dao.SpuDao;
 import com.mammon.goods.domain.dto.SkuDto;
 import com.mammon.goods.domain.dto.SkuSingleDto;
 import com.mammon.goods.domain.dto.SkuSpecDto;
+import com.mammon.goods.domain.dto.SpuDto;
 import com.mammon.goods.domain.entity.SkuEntity;
 import com.mammon.goods.domain.entity.SkuSpecEntity;
+import com.mammon.goods.domain.entity.SpuEntity;
 import com.mammon.goods.domain.vo.SkuSpecVo;
 import com.mammon.goods.domain.vo.SkuVo;
 import com.mammon.goods.domain.vo.SpuBaseVo;
@@ -56,6 +60,8 @@ public class SkuService {
     private RedisService redisService;
     @Resource
     private StockSpuService stockSpuService;
+    @Autowired
+    private SpuDao spuDao;
 
     @Transactional(rollbackFor = Exception.class)
     public List<StockSkuDto> batchEdit(long merchantNo, String spuId, List<SkuDto> skuDtos) {
@@ -124,56 +130,50 @@ public class SkuService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void save(long merchantNo, SkuSingleDto dto) {
-        if (StringUtils.isBlank(dto.getSkuCode())) {
-            dto.setSkuCode(leafCodeService.generateSkuCode(merchantNo));
+    public void save(long merchantNo, String accountId, SkuSingleDto dto) {
+        if (StringUtils.isNotBlank(dto.getSpuNo())) {
+            SpuEntity spu = spuDao.findBySpuNo(merchantNo, dto.getSpuNo());
+            if (spu != null) {
+                throw new CustomException("条码商品信息已存在，不能重复添加");
+            }
         }
-        if (StringUtils.isBlank(dto.getSkuNo())) {
-            dto.setSkuNo(dto.getSkuCode());
+        SpuDto spuDto = new SpuDto();
+        if (StringUtils.isBlank(dto.getSpuCode())) {
+            dto.setSpuCode(leafCodeService.generateSpuCode(merchantNo));
         }
-
-        // 多规格商品，选中规格值组合后根据此字段进行筛选
-        String joinSpec = dto.getSpecs().stream()
-                .map(SkuSpecDto::getSpecValueId)
-                .sorted(Comparator.comparing(x -> x))
-                .collect(Collectors.joining("_"));
-
-        SkuEntity entity = new SkuEntity();
-        BeanUtils.copyProperties(dto, entity);
-        entity.setId(Generate.generateUUID());
-        entity.setSpuId(dto.getSpuId());
-        entity.setPurchaseAmount(AmountUtil.parse(dto.getPurchaseAmount()));
-        entity.setReferenceAmount(AmountUtil.parse(dto.getReferenceAmount()));
-        entity.setSkuWeight(QuantityUtil.parse(dto.getSkuWeight()));
-        entity.setStatus(CommonStatus.ENABLED.getCode());
-        entity.setCreateTime(LocalDateTime.now());
-        entity.setUpdateTime(LocalDateTime.now());
-        entity.setJoinSpec(joinSpec);
-        skuDao.save(entity);
-        if (!CollectionUtils.isEmpty(dto.getSpecs())) {
-            skuSpecService.batchSave(dto.getSpuId(), entity.getId(), dto.getSpecs());
+        if (StringUtils.isBlank(dto.getSpuNo())) {
+            dto.setSpuNo(dto.getSpuCode());
         }
+        spuDto.setCategoryId(dto.getCategoryId());
+        spuDto.setSpuCode(dto.getSpuCode());
+        spuDto.setSpuNo(dto.getSpuNo());
+        spuDto.setName(dto.getName());
+        spuDto.setUnitId(dto.getUnitId());
+        spuDto.setCountedType(dto.getCountedType());
+        spuDto.setRemark(dto.getRemark());
+        spuDto.setSyncStoreNo(dto.getSyncStoreNo());
+        spuDto.setPictures(dto.getPictures());
 
-        long syncStoreNo = 0;
-        String key = "spu:syncStoreNo:" + dto.getSpuId();
-        String result = redisService.get(key);
-        if (StrUtil.isNotBlank(result)) {
-            syncStoreNo = Long.parseLong(result);
+        String skuName = dto.getName();
+        if (CollUtil.isNotEmpty(dto.getSpecs())) {
+            String specNames = dto.getSpecs().stream().map(SkuSpecDto::getSpecValueName)
+                    .collect(Collectors.joining("_"));
+            skuName += "_" + specNames;
         }
 
-        StockSkuDto stockSkuDto = new StockSkuDto();
-        BeanUtils.copyProperties(entity, stockSkuDto);
-        stockSkuDto.setSkuId(entity.getId());
-        stockSkuDto.setSellStock(StockUtil.parse(dto.getSellStock()));
+        SkuDto skuDto = new SkuDto();
+        skuDto.setSkuCode(dto.getSpuCode());
+        skuDto.setSkuNo(dto.getSpuNo());
+        skuDto.setSkuName(skuName);
+        skuDto.setPurchaseAmount(dto.getPurchaseAmount());
+        skuDto.setReferenceAmount(dto.getReferenceAmount());
+        skuDto.setSkuWeight(dto.getSkuWeight());
+        skuDto.setSellStock(dto.getSellStock());
+        skuDto.setSpecs(dto.getSpecs());
+        skuDto.setTags(dto.getTags());
 
-        // 商品资料，门店库存更新到库存表中
-        StockSpuDto stockSpuDto = new StockSpuDto();
-        BeanUtils.copyProperties(entity, stockSpuDto);
-        stockSpuDto.setSpuId(entity.getId());
-        stockSpuDto.setSyncStoreNo(syncStoreNo);
-        stockSpuDto.setStatus(entity.getStatus());
-        stockSpuDto.setSkus(Collections.singletonList(stockSkuDto));
-        stockSpuService.batchEdit(merchantNo, stockSpuDto);
+        spuDto.setSkus(Collections.singletonList(skuDto));
+        spuService.create(merchantNo, accountId, spuDto);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -210,44 +210,63 @@ public class SkuService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void edit(long merchantNo, String id, SkuSingleDto dto) {
-        SkuEntity sku = skuDao.findById(id);
+    public void edit(long merchantNo, String accountId, String skuId, SkuSingleDto dto) {
+        SkuEntity sku = skuDao.findById(skuId);
         if (sku == null) {
-            throw new CustomException("商品规格信息错误");
+            throw new CustomException("商品信息错误");
+        }
+        SpuDto spuDto = new SpuDto();
+        if (StringUtils.isBlank(dto.getSpuCode())) {
+            dto.setSpuCode(leafCodeService.generateSpuCode(merchantNo));
+        }
+        if (StringUtils.isBlank(dto.getSpuNo())) {
+            dto.setSpuNo(dto.getSpuCode());
+        }
+        spuDto.setCategoryId(dto.getCategoryId());
+        spuDto.setSpuCode(dto.getSpuCode());
+        spuDto.setSpuNo(dto.getSpuNo());
+        spuDto.setName(dto.getName());
+        spuDto.setUnitId(dto.getUnitId());
+        spuDto.setCountedType(dto.getCountedType());
+        spuDto.setRemark(dto.getRemark());
+        spuDto.setSyncStoreNo(dto.getSyncStoreNo());
+        spuDto.setPictures(dto.getPictures());
+
+        String skuName = dto.getName();
+        if (CollUtil.isNotEmpty(dto.getSpecs())) {
+            String specNames = dto.getSpecs().stream().map(SkuSpecDto::getSpecValueName)
+                    .collect(Collectors.joining("_"));
+            skuName += "_" + specNames;
         }
 
-        // 多规格商品，选中规格值组合后根据此字段进行筛选
-        String joinSpec = dto.getSpecs().stream()
-                .map(SkuSpecDto::getSpecValueId)
-                .sorted(Comparator.comparing(x -> x))
-                .collect(Collectors.joining("_"));
+        SkuDto skuDto = new SkuDto();
+        skuDto.setSkuCode(dto.getSpuCode());
+        skuDto.setSkuNo(dto.getSpuNo());
+        skuDto.setSkuName(skuName);
+        skuDto.setPurchaseAmount(dto.getPurchaseAmount());
+        skuDto.setReferenceAmount(dto.getReferenceAmount());
+        skuDto.setSkuWeight(dto.getSkuWeight());
+        skuDto.setSellStock(dto.getSellStock());
+        skuDto.setSpecs(dto.getSpecs());
+        skuDto.setTags(dto.getTags());
 
-        SkuEntity entity = new SkuEntity();
-        BeanUtils.copyProperties(dto, entity);
-        entity.setUpdateTime(LocalDateTime.now());
-        entity.setPurchaseAmount(AmountUtil.parse(dto.getPurchaseAmount()));
-        entity.setReferenceAmount(AmountUtil.parse(dto.getReferenceAmount()));
-        entity.setSkuWeight(QuantityUtil.parse(dto.getSkuWeight()));
-        entity.setJoinSpec(joinSpec);
-        skuDao.update(entity);
-        if (!CollectionUtils.isEmpty(dto.getSpecs())) {
-            skuSpecService.batchSave(sku.getSpuId(), sku.getId(), dto.getSpecs());
+        spuDto.setSkus(Collections.singletonList(skuDto));
+        spuService.edit(merchantNo, accountId, skuId, spuDto);
+    }
+
+    public void deleteBySkuId(long merchantNo, String skuId) {
+        SkuEntity sku = skuDao.findById(skuId);
+        if (sku == null) {
+            throw new CustomException("商品信息错误");
         }
-
-        StockSkuDto stockSkuDto = new StockSkuDto();
-        BeanUtils.copyProperties(entity, stockSkuDto);
-        stockSkuDto.setSpuId(sku.getSpuId());
-        stockSkuDto.setSkuId(entity.getId());
-        stockSkuDto.setSellStock(0);
-        stockSkuDto.setStatus(sku.getStatus());
-
-        // 商品资料，门店库存更新到库存表中
-        StockSpuDto stockSpuDto = new StockSpuDto();
-        BeanUtils.copyProperties(entity, stockSpuDto);
-        stockSpuDto.setSpuId(entity.getId());
-        stockSpuDto.setStatus(entity.getStatus());
-        stockSpuDto.setSkus(Collections.singletonList(stockSkuDto));
-        stockSpuService.batchEdit(merchantNo, stockSpuDto);
+        List<SkuEntity> skus = skuDao.findAllBySpuId(sku.getSpuId());
+        if (skus.size() == 1) {
+            // 删除spu
+            spuService.deleted(merchantNo, sku.getSpuId());
+        } else {
+            // 只删除当前sku
+            delete(skuId);
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)

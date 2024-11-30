@@ -27,17 +27,26 @@ public class SkuController {
                                    @RequestHeader long storeNo,
                                    @RequestHeader String accountId,
                                    @Validated @RequestBody SkuSingleDto dto) {
-        skuService.save(merchantNo, dto);
+        skuService.save(merchantNo, accountId, dto);
         return ResultJson.ok();
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{skuId}")
     public ResultJson<Void> edit(@RequestHeader long merchantNo,
                                  @RequestHeader long storeNo,
                                  @RequestHeader String accountId,
-                                 @PathVariable("id") String id,
+                                 @PathVariable("skuId") String skuId,
                                  @RequestBody SkuSingleDto dto) {
-        skuService.edit(merchantNo, id, dto);
+        skuService.edit(merchantNo, accountId, skuId, dto);
+        return ResultJson.ok();
+    }
+
+    @DeleteMapping("/{skuId}")
+    public ResultJson<Void> delete(@RequestHeader long merchantNo,
+                                   @RequestHeader long storeNo,
+                                   @RequestHeader String accountId,
+                                   @PathVariable("skuId") String skuId) {
+        skuService.deleteBySkuId(merchantNo, skuId);
         return ResultJson.ok();
     }
 }
