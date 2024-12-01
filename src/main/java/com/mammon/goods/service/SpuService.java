@@ -145,6 +145,7 @@ public class SpuService {
     public void edit(long merchantNo, String accountId, String id, SpuDto dto) {
         SpuEntity spu = spuDao.findById(merchantNo, id);
         if (spu == null) {
+            log.error("商品信息错误，id:{}", id);
             throw new CustomException("商品信息错误");
         }
         SpuEntity entity = new SpuEntity();

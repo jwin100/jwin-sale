@@ -205,7 +205,6 @@ public class SkuService {
         BeanUtils.copyProperties(entity, stockSkuDto);
         stockSkuDto.setSpuId(sku.getSpuId());
         stockSkuDto.setSkuId(entity.getId());
-        stockSkuDto.setSellStock(StockUtil.parse(dto.getSellStock()));
         stockSkuDto.setStatus(sku.getStatus());
         return stockSkuDto;
     }
@@ -230,7 +229,6 @@ public class SkuService {
         spuDto.setUnitId(dto.getUnitId());
         spuDto.setCountedType(dto.getCountedType());
         spuDto.setRemark(dto.getRemark());
-        spuDto.setSyncStoreNo(dto.getSyncStoreNo());
         spuDto.setPictures(dto.getPictures());
 
         String skuName = dto.getName();
@@ -247,7 +245,6 @@ public class SkuService {
         skuDto.setPurchaseAmount(dto.getPurchaseAmount());
         skuDto.setReferenceAmount(dto.getReferenceAmount());
         skuDto.setSkuWeight(dto.getSkuWeight());
-        skuDto.setSellStock(dto.getSellStock());
         skuDto.setSpecs(dto.getSpecs());
         skuDto.setTags(dto.getTags());
 
