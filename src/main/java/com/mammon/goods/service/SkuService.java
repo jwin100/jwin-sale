@@ -249,7 +249,7 @@ public class SkuService {
         skuDto.setTags(dto.getTags());
 
         spuDto.setSkus(Collections.singletonList(skuDto));
-        spuService.edit(merchantNo, accountId, skuId, spuDto);
+        spuService.edit(merchantNo, accountId, sku.getSpuId(), spuDto);
     }
 
     public void deleteBySkuId(long merchantNo, String skuId) {
