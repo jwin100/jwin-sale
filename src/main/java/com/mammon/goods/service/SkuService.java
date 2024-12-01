@@ -72,7 +72,8 @@ public class SkuService {
         // 获取要删除的skuId
         List<String> deleteSkuIds = new ArrayList<>();
         skus.forEach(x -> {
-            SkuDto skuDto = skuDtos.stream().filter(y -> y.getId().equals(x.getId())).findFirst().orElse(null);
+            SkuDto skuDto = skuDtos.stream().filter(y -> StrUtil.isNotBlank(y.getId()) && y.getId().equals(x.getId()))
+                    .findFirst().orElse(null);
             if (skuDto == null) {
                 deleteSkuIds.add(x.getId());
             }
@@ -239,6 +240,7 @@ public class SkuService {
         }
 
         SkuDto skuDto = new SkuDto();
+        skuDto.setId(skuId);
         skuDto.setSkuCode(dto.getSpuCode());
         skuDto.setSkuNo(dto.getSpuNo());
         skuDto.setSkuName(skuName);
