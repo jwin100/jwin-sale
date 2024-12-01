@@ -3,6 +3,8 @@ package com.mammon.goods.controller;
 import com.mammon.common.ResultJson;
 import com.mammon.goods.domain.dto.SkuSingleDto;
 import com.mammon.goods.domain.dto.SpuDto;
+import com.mammon.goods.domain.vo.SkuDetailVo;
+import com.mammon.goods.domain.vo.SpuDetailVo;
 import com.mammon.goods.service.SkuService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -48,5 +50,13 @@ public class SkuController {
                                    @PathVariable("skuId") String skuId) {
         skuService.deleteBySkuId(merchantNo, skuId);
         return ResultJson.ok();
+    }
+
+    @GetMapping("/{skuId}")
+    public ResultJson<SkuDetailVo> info(@RequestHeader long merchantNo,
+                                        @RequestHeader long storeNo,
+                                        @RequestHeader String accountId,
+                                        @PathVariable("skuId") String skuId) {
+        return ResultJson.ok(skuService.findDetailById(merchantNo, skuId));
     }
 }

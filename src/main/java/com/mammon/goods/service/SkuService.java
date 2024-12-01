@@ -11,9 +11,8 @@ import com.mammon.goods.domain.dto.SkuDto;
 import com.mammon.goods.domain.dto.SkuSingleDto;
 import com.mammon.goods.domain.dto.SkuSpecDto;
 import com.mammon.goods.domain.dto.SpuDto;
-import com.mammon.goods.domain.entity.SkuEntity;
-import com.mammon.goods.domain.entity.SkuSpecEntity;
-import com.mammon.goods.domain.entity.SpuEntity;
+import com.mammon.goods.domain.entity.*;
+import com.mammon.goods.domain.vo.SkuDetailVo;
 import com.mammon.goods.domain.vo.SkuSpecVo;
 import com.mammon.goods.domain.vo.SkuVo;
 import com.mammon.goods.domain.vo.SpuBaseVo;
@@ -23,6 +22,7 @@ import com.mammon.stock.domain.dto.StockSkuDto;
 import com.mammon.stock.domain.dto.StockSpuDto;
 import com.mammon.stock.service.StockSpuService;
 import com.mammon.utils.AmountUtil;
+import com.mammon.utils.JsonUtil;
 import com.mammon.utils.QuantityUtil;
 import com.mammon.utils.StockUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -56,9 +56,13 @@ public class SkuService {
 
     @Resource
     private LeafCodeService leafCodeService;
-    
+
     @Resource
     private SpuDao spuDao;
+    @Resource
+    private UnitService unitService;
+    @Resource
+    private CategoryService categoryService;
 
     @Transactional(rollbackFor = Exception.class)
     public List<StockSkuDto> batchEdit(long merchantNo, String spuId, List<SkuDto> skuDtos) {
@@ -278,6 +282,48 @@ public class SkuService {
         skuDao.delete(id);
     }
 
+    public SkuDetailVo findDetailById(long merchantNo, String skuId) {
+        SkuEntity sku = skuDao.findById(skuId);
+        if (sku == null) {
+            return null;
+        }
+        SpuEntity spu = spuDao.findById(merchantNo, sku.getSpuId());
+        if (spu == null) {
+            return null;
+        }
+        UnitEntity unit = unitService.findById(spu.getMerchantNo(), spu.getUnitId());
+        SkuDetailVo vo = new SkuDetailVo();
+        vo.setSkuId(sku.getId());
+        vo.setSpuId(spu.getId());
+        vo.setMerchantNo(spu.getMerchantNo());
+        vo.setCategoryId(spu.getCategoryId());
+        vo.setCategoryIds(getCategoryIds(spu.getMerchantNo(), spu.getCategoryId()));
+        vo.setCategoryName(getCategoryName(spu.getMerchantNo(), spu.getCategoryId()));
+        vo.setLastCategoryName(getLastCategoryName(spu.getMerchantNo(), spu.getCategoryId()));
+        vo.setSpuCode(spu.getSpuCode());
+        vo.setSpuNo(spu.getSpuNo());
+        vo.setName(spu.getName());
+        vo.setUnitId(spu.getUnitId());
+        if (unit != null) {
+            vo.setUnitName(unit.getName());
+            vo.setUnitType(unit.getType());
+        }
+        vo.setCountedType(spu.getCountedType());
+        vo.setRemark(spu.getRemark());
+        vo.setStatus(spu.getStatus());
+        vo.setCreateTime(spu.getCreateTime());
+        vo.setPictures(JsonUtil.toList(spu.getPictures(), String.class));
+        vo.setSkuNo(sku.getSkuNo());
+        vo.setSkuCode(sku.getSkuCode());
+        vo.setSkuName(sku.getSkuName());
+        vo.setPicture(vo.getPictures().stream().findFirst().orElse(null));
+        vo.setPurchaseAmount(AmountUtil.parseBigDecimal(sku.getPurchaseAmount()));
+        vo.setReferenceAmount(AmountUtil.parseBigDecimal(sku.getReferenceAmount()));
+        vo.setSkuWeight(QuantityUtil.parseBigDecimal(sku.getSkuWeight()));
+        vo.setSpecs(skuSpecService.findAllBySpuId(sku.getSpuId(), sku.getId()));
+        return vo;
+    }
+
     public SkuVo findById(long merchantNo, String id) {
         SkuEntity sku = skuDao.findById(id);
         if (sku == null) {
@@ -332,5 +378,53 @@ public class SkuService {
             );
             return vo;
         }).collect(Collectors.toList());
+    }
+
+    private String getCategoryName(long merchantNo, String categoryId) {
+        if (StringUtils.isBlank(categoryId)) {
+            return null;
+        }
+        String categoryName;
+        CategoryEntity entity = categoryService.findById(merchantNo, categoryId);
+        if (entity == null) {
+            return null;
+        }
+        categoryName = entity.getName();
+        if (StringUtils.isNotBlank(entity.getPid())) {
+            CategoryEntity parentEntity = categoryService.findById(merchantNo, entity.getPid());
+            if (parentEntity == null) {
+                return categoryName;
+            }
+            categoryName = parentEntity.getName() + ">" + categoryName;
+        }
+        return categoryName;
+    }
+
+    private String getLastCategoryName(long merchantNo, String categoryId) {
+        CategoryEntity entity = categoryService.findById(merchantNo, categoryId);
+        if (entity == null) {
+            return null;
+        }
+        return entity.getName();
+    }
+
+    private List<String> getCategoryIds(long merchantNo, String categoryId) {
+        if (StringUtils.isBlank(categoryId)) {
+            return Collections.emptyList();
+        }
+        List<String> categoryIds = new ArrayList<>();
+        CategoryEntity entity = categoryService.findById(merchantNo, categoryId);
+        if (entity == null) {
+            return Collections.emptyList();
+        }
+        categoryIds.add(entity.getId());
+        if (StringUtils.isNotBlank(entity.getPid())) {
+            CategoryEntity parentEntity = categoryService.findById(merchantNo, entity.getPid());
+            if (parentEntity == null) {
+                return categoryIds;
+            }
+            categoryIds.add(parentEntity.getId());
+        }
+        return categoryIds;
     }
 }

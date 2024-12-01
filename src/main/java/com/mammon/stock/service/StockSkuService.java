@@ -16,6 +16,9 @@ import com.mammon.goods.domain.vo.SkuSpecVo;
 import com.mammon.goods.service.CategoryService;
 import com.mammon.goods.service.SkuSpecService;
 import com.mammon.goods.service.UnitService;
+import com.mammon.merchant.domain.entity.MerchantStoreEntity;
+import com.mammon.merchant.domain.vo.MerchantStoreVo;
+import com.mammon.merchant.service.MerchantStoreService;
 import com.mammon.stock.dao.StockSkuDao;
 import com.mammon.stock.dao.StockSpuDao;
 import com.mammon.stock.domain.dto.StockSkuDto;
@@ -61,9 +64,12 @@ public class StockSkuService {
 
     @Resource
     private StockSpuService stockSpuService;
-    private StockSpuDao stockSpuDao;
-    @Autowired
+
+    @Resource
     private CategoryService categoryService;
+
+    @Resource
+    private MerchantStoreService merchantStoreService;
 
     /**
      * 批量保存商品规格信息到门店商品规格表中
@@ -210,6 +216,52 @@ public class StockSkuService {
             }
             return stockSkuVo;
         }).collect(Collectors.toList());
+    }
+
+    public StockSkuDetailVo findDetailBySkuId(long merchantNo, long storeNo, String skuId) {
+        StockSkuEntity sku = stockSkuDao.findBySkuId(merchantNo, storeNo, skuId);
+        if (sku == null) {
+            return null;
+        }
+        StockSpuEntity spu = stockSpuDao.findBySpuId(merchantNo, storeNo, sku.getSpuId());
+        if (spu == null) {
+            return null;
+        }
+        UnitEntity unit = unitService.findById(merchantNo, spu.getUnitId());
+
+        StockSkuDetailVo detailVo = new StockSkuDetailVo();
+        detailVo.setSkuId(sku.getSkuId());
+        detailVo.setSpuId(sku.getSpuId());
+        detailVo.setMerchantNo(spu.getMerchantNo());
+        detailVo.setStoreNo(spu.getStoreNo());
+        detailVo.setStoreName(getStoreName(merchantNo, storeNo));
+        detailVo.setCategoryId(spu.getCategoryId());
+        detailVo.setCategoryName(getCategoryName(merchantNo, spu.getCategoryId()));
+        detailVo.setLastCategoryName(getLastCategoryName(merchantNo, spu.getCategoryId()));
+        detailVo.setSpuNo(spu.getSpuNo());
+        detailVo.setSpuCode(spu.getSpuCode());
+        detailVo.setName(spu.getName());
+        if (unit != null) {
+            detailVo.setUnitId(unit.getId());
+            detailVo.setUnitName(unit.getName());
+            detailVo.setUnitType(unit.getType());
+        }
+        detailVo.setCountedType(spu.getCountedType());
+        detailVo.setRemark(spu.getRemark());
+        detailVo.setStatus(spu.getStatus());
+        detailVo.setCreateTime(spu.getCreateTime());
+        detailVo.setPictures(JsonUtil.toList(spu.getPictures(), String.class));
+        detailVo.setPicture(detailVo.getPictures().stream().findFirst().orElse(null));
+        detailVo.setSkuNo(sku.getSkuNo());
+        detailVo.setSkuCode(sku.getSkuCode());
+        detailVo.setSkuName(sku.getSkuName());
+        detailVo.setPurchaseAmount(AmountUtil.parseBigDecimal(sku.getPurchaseAmount()));
+        detailVo.setReferenceAmount(AmountUtil.parseBigDecimal(sku.getReferenceAmount()));
+        detailVo.setSkuWeight(StockUtil.parseBigDecimal(sku.getSkuWeight()));
+        detailVo.setSellStock(StockUtil.parseBigDecimal(sku.getSellStock()));
+        List<SkuSpecVo> specVos = skuSpecService.findAllBySpuId(sku.getSpuId(), sku.getSkuId());
+        detailVo.setSpecs(specVos);
+        return detailVo;
     }
 
     public PageVo<StockSkuDetailListVo> page(long merchantNo, long storeNo, String accountId, StockSkuPageQuery query) {
@@ -460,5 +512,41 @@ public class StockSkuService {
             categoryIds.addAll(list.stream().map(CategoryEntity::getId).collect(Collectors.toList()));
         }
         return categoryIds;
+    }
+
+    private String getStoreName(long merchantNo, long storeNo) {
+        MerchantStoreVo storeVo = merchantStoreService.findByStoreNo(merchantNo, storeNo);
+        if (storeVo == null) {
+            return null;
+        }
+        return storeVo.getStoreName();
+    }
+
+    private String getCategoryName(long merchantNo, String categoryId) {
+        if (StringUtils.isBlank(categoryId)) {
+            return null;
+        }
+        String categoryName;
+        CategoryEntity entity = categoryService.findById(merchantNo, categoryId);
+        if (entity == null) {
+            return null;
+        }
+        categoryName = entity.getName();
+        if (StringUtils.isNotBlank(entity.getPid())) {
+            CategoryEntity parentEntity = categoryService.findById(merchantNo, entity.getPid());
+            if (parentEntity == null) {
+                return categoryName;
+            }
+            categoryName = parentEntity.getName() + ">" + categoryName;
+        }
+        return categoryName;
+    }
+
+    private String getLastCategoryName(long merchantNo, String categoryId) {
+        CategoryEntity entity = categoryService.findById(merchantNo, categoryId);
+        if (entity == null) {
+            return null;
+        }
+        return entity.getName();
     }
 }
