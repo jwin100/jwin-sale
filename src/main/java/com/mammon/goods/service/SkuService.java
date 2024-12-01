@@ -316,7 +316,6 @@ public class SkuService {
         vo.setSkuNo(sku.getSkuNo());
         vo.setSkuCode(sku.getSkuCode());
         vo.setSkuName(sku.getSkuName());
-        vo.setPicture(vo.getPictures().stream().findFirst().orElse(null));
         vo.setPurchaseAmount(AmountUtil.parseBigDecimal(sku.getPurchaseAmount()));
         vo.setReferenceAmount(AmountUtil.parseBigDecimal(sku.getReferenceAmount()));
         vo.setSkuWeight(QuantityUtil.parseBigDecimal(sku.getSkuWeight()));

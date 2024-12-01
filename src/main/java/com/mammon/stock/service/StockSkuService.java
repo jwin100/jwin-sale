@@ -70,6 +70,8 @@ public class StockSkuService {
 
     @Resource
     private MerchantStoreService merchantStoreService;
+    @Resource
+    private StockSpuDao stockSpuDao;
 
     /**
      * 批量保存商品规格信息到门店商品规格表中
@@ -251,7 +253,6 @@ public class StockSkuService {
         detailVo.setStatus(spu.getStatus());
         detailVo.setCreateTime(spu.getCreateTime());
         detailVo.setPictures(JsonUtil.toList(spu.getPictures(), String.class));
-        detailVo.setPicture(detailVo.getPictures().stream().findFirst().orElse(null));
         detailVo.setSkuNo(sku.getSkuNo());
         detailVo.setSkuCode(sku.getSkuCode());
         detailVo.setSkuName(sku.getSkuName());

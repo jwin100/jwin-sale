@@ -112,11 +112,6 @@ public class StockSkuDetailVo {
     private List<String> pictures = new ArrayList<>();
 
     /**
-     * 图片(无前缀)
-     */
-    private String picture;
-
-    /**
      * 规格编码
      */
     private String skuCode;

@@ -100,8 +100,6 @@ public class SkuDetailVo {
 
     private String skuName;
 
-    private String picture;
-
     /**
      * 进价
      */
