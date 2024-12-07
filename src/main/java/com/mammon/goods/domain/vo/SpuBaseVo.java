@@ -58,6 +58,8 @@ public class SpuBaseVo {
 
     private String unitTypeName;
 
+    private int countedType;
+
     /**
      * 备注
      */

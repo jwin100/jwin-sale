@@ -1,10 +1,8 @@
-package com.mammon.stock.domain.vo;
+package com.mammon.goods.domain.vo;
 
 import com.mammon.enums.CommonStatus;
 import com.mammon.enums.IEnum;
 import com.mammon.goods.domain.enums.UnitType;
-import com.mammon.goods.domain.vo.SkuSpecVo;
-import com.mammon.goods.domain.vo.SkuTagVo;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -16,7 +14,7 @@ import java.util.List;
  * @date 2023-03-31 14:11:19
  */
 @Data
-public class StockSkuDetailListVo {
+public class SkuDetailListVo {
 
     private String spuId;
 
@@ -48,11 +46,6 @@ public class StockSkuDetailListVo {
      * 零售价
      */
     private BigDecimal referenceAmount;
-
-    /**
-     * 总库存
-     */
-    private BigDecimal sellStock;
 
     /**
      * 重量
@@ -91,5 +84,9 @@ public class StockSkuDetailListVo {
 
     public String getStatusName() {
         return IEnum.getNameByCode(this.getStatus(), CommonStatus.class);
+    }
+
+    public String getUnitTypeName() {
+        return IEnum.getNameByCode(this.getUnitType(), UnitType.class);
     }
 }

@@ -1,8 +1,11 @@
 package com.mammon.goods.controller;
 
+import com.mammon.common.PageVo;
 import com.mammon.common.ResultJson;
 import com.mammon.goods.domain.dto.SkuSingleDto;
 import com.mammon.goods.domain.dto.SpuDto;
+import com.mammon.goods.domain.query.SkuPageQuery;
+import com.mammon.goods.domain.vo.SkuDetailListVo;
 import com.mammon.goods.domain.vo.SkuDetailVo;
 import com.mammon.goods.domain.vo.SpuDetailVo;
 import com.mammon.goods.service.SkuService;
@@ -58,5 +61,13 @@ public class SkuController {
                                         @RequestHeader String accountId,
                                         @PathVariable("skuId") String skuId) {
         return ResultJson.ok(skuService.findDetailById(merchantNo, skuId));
+    }
+
+    @GetMapping("/page")
+    public ResultJson<PageVo<SkuDetailListVo>> page(@RequestHeader long merchantNo,
+                                                    @RequestHeader long storeNo,
+                                                    @RequestHeader String accountId,
+                                                    SkuPageQuery query) {
+        return ResultJson.ok(skuService.page(merchantNo, storeNo, accountId, query));
     }
 }

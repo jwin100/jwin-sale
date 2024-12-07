@@ -305,7 +305,7 @@ public class StockSkuService {
                 stockSkuVo.setUnitType(unit.getType());
             }
             return stockSkuVo;
-        }).collect(Collectors.toList());
+        }).filter(Objects::nonNull).collect(Collectors.toList());
 
         return PageResult.of(query.getPageIndex(), query.getPageSize(), total, vos);
     }

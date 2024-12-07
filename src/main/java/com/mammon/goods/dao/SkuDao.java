@@ -1,6 +1,10 @@
 package com.mammon.goods.dao;
 
 import com.mammon.goods.domain.entity.SkuEntity;
+import com.mammon.goods.domain.query.SkuPageQuery;
+import com.mammon.stock.domain.entity.StockSkuEntity;
+import com.mammon.stock.domain.query.StockSkuPageQuery;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
@@ -8,6 +12,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -150,5 +155,71 @@ public class SkuDao {
 
         RowMapper<SkuEntity> rowMapper = new BeanPropertyRowMapper<>(SkuEntity.class);
         return namedParameterJdbcTemplate.query(sql, params, rowMapper);
+    }
+
+    public int countPage(long merchantNo, SkuPageQuery query) {
+        MapSqlParameterSource params = new MapSqlParameterSource();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT ")
+                .append(" count(sku.id) ")
+                .append(" FROM m_goods_sku sku ")
+                .append(" LEFT JOIN m_goods_spu spu on spu.id = sku.spu_id ")
+                .append(" WHERE spu.deleted = 0 AND spu.merchant_no = :merchantNo ")
+                .append(pageWhere(query, params));
+
+        params.addValue("merchantNo", merchantNo);
+
+        String sql = sb.toString();
+
+        return namedParameterJdbcTemplate.queryForObject(sql, params, Integer.class);
+    }
+
+    public List<SkuEntity> findPage(long merchantNo, SkuPageQuery query) {
+        MapSqlParameterSource params = new MapSqlParameterSource();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT ")
+                .append(" sku.* ")
+                .append(" FROM m_goods_sku sku ")
+                .append(" LEFT JOIN m_goods_spu spu on spu.id = sku.spu_id ")
+                .append(" WHERE spu.deleted = 0 AND spu.merchant_no = :merchantNo ")
+                .append(pageWhere(query, params))
+                .append(" ORDER BY sku.create_time desc ");
+
+        sb.append(" limit :limit offset :offset ");
+
+        params.addValue("merchantNo", merchantNo);
+        params.addValue("limit", query.getPageSize());
+        params.addValue("offset", query.getOffset());
+
+        String sql = sb.toString();
+
+        RowMapper<SkuEntity> rowMapper = new BeanPropertyRowMapper<>(SkuEntity.class);
+        return namedParameterJdbcTemplate.query(sql, params, rowMapper);
+    }
+
+    private String pageWhere(SkuPageQuery query, MapSqlParameterSource params) {
+        StringBuilder sb = new StringBuilder();
+        if (StringUtils.isNotBlank(query.getSearchKey())) {
+            sb.append(" AND ( ")
+                    .append(" spu.spu_code like :searchKey OR spu.spu_no like :searchKey OR spu.name like :searchKey ")
+                    .append(" OR sku.sku_code like :searchKey OR sku.sku_no like :searchKey OR sku.sku_name like :searchKey ")
+                    .append(" ) ");
+            params.addValue("searchKey", "%" + query.getSearchKey() + "%");
+        }
+        if (!CollectionUtils.isEmpty(query.getCategoryIds())) {
+            sb.append(" AND spu.category_id in ( :categoryIds )");
+            params.addValue("categoryIds", query.getCategoryIds());
+        }
+        if (query.getCountedType() != null) {
+            sb.append(" AND spu.counted_type = :countedType ");
+            params.addValue("countedType", query.getCountedType());
+        }
+        if (query.getStatus() != null) {
+            sb.append(" AND spu.status = :status ");
+            params.addValue("status", query.getStatus());
+        }
+        return sb.toString();
     }
 }

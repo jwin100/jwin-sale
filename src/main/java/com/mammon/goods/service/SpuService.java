@@ -349,6 +349,14 @@ public class SpuService {
         return spus.stream().map(this::convertBaseInfo).collect(Collectors.toList());
     }
 
+    public List<SpuBaseVo> findBaseListByIds(long merchantNo, List<String> ids) {
+        if(CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyList();
+        }
+        List<SpuEntity> spus = spuDao.findAllByIds(merchantNo, ids);
+        return spus.stream().map(this::convertBaseInfo).collect(Collectors.toList());
+    }
+
     /**
      * 获取分页列表
      *

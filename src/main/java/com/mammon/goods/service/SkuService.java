@@ -3,6 +3,8 @@ package com.mammon.goods.service;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.mammon.common.Generate;
+import com.mammon.common.PageResult;
+import com.mammon.common.PageVo;
 import com.mammon.enums.CommonStatus;
 import com.mammon.exception.CustomException;
 import com.mammon.goods.dao.SkuDao;
@@ -12,14 +14,18 @@ import com.mammon.goods.domain.dto.SkuSingleDto;
 import com.mammon.goods.domain.dto.SkuSpecDto;
 import com.mammon.goods.domain.dto.SpuDto;
 import com.mammon.goods.domain.entity.*;
-import com.mammon.goods.domain.vo.SkuDetailVo;
-import com.mammon.goods.domain.vo.SkuSpecVo;
-import com.mammon.goods.domain.vo.SkuVo;
-import com.mammon.goods.domain.vo.SpuBaseVo;
+import com.mammon.goods.domain.enums.CategoryLevel;
+import com.mammon.goods.domain.query.CategoryListQuery;
+import com.mammon.goods.domain.query.SkuPageQuery;
+import com.mammon.goods.domain.vo.*;
 import com.mammon.leaf.service.LeafCodeService;
 import com.mammon.service.RedisService;
 import com.mammon.stock.domain.dto.StockSkuDto;
 import com.mammon.stock.domain.dto.StockSpuDto;
+import com.mammon.stock.domain.entity.StockSkuEntity;
+import com.mammon.stock.domain.entity.StockSpuEntity;
+import com.mammon.stock.domain.query.StockSkuPageQuery;
+import com.mammon.stock.domain.vo.StockSkuDetailListVo;
 import com.mammon.stock.service.StockSpuService;
 import com.mammon.utils.AmountUtil;
 import com.mammon.utils.JsonUtil;
@@ -35,10 +41,7 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -342,6 +345,66 @@ public class SkuService {
 
     public List<SkuEntity> findAll() {
         return skuDao.findAll();
+    }
+
+    public PageVo<SkuDetailListVo> page(long merchantNo, long storeNo, String accountId, SkuPageQuery query) {
+        query.setCategoryIds(convertCategoryIds(merchantNo, query.getCategoryIds(), query.getCategoryId()));
+        int total = skuDao.countPage(merchantNo, query);
+        if (total <= 0) {
+            return PageResult.of();
+        }
+        List<SkuEntity> list = skuDao.findPage(merchantNo, query);
+        if (CollectionUtils.isEmpty(list)) {
+            return PageResult.of();
+        }
+        List<String> spuIds = list.stream().map(SkuEntity::getSpuId).distinct().collect(Collectors.toList());
+        List<SpuBaseVo> spus = spuService.findBaseListByIds(merchantNo, spuIds);
+        List<SkuDetailListVo> vos = list.stream().map(sku -> {
+            SpuBaseVo spu = spus.stream()
+                    .filter(x -> x.getId().equals(sku.getSpuId()))
+                    .findFirst().orElse(null);
+            if (spu == null) {
+                return null;
+            }
+            List<String> pictures = spu.getPictures();
+
+            List<SkuSpecVo> specVos = skuSpecService.findAllBySpuId(sku.getSpuId(), sku.getId());
+            SkuDetailListVo skuVo = new SkuDetailListVo();
+            BeanUtils.copyProperties(sku, skuVo);
+            skuVo.setSpecs(specVos);
+            skuVo.setPicture(pictures.stream().findFirst().orElse(null));
+            skuVo.setPurchaseAmount(AmountUtil.parseBigDecimal(sku.getPurchaseAmount()));
+            skuVo.setReferenceAmount(AmountUtil.parseBigDecimal(sku.getReferenceAmount()));
+            skuVo.setSkuWeight(StockUtil.parseBigDecimal(sku.getSkuWeight()));
+            skuVo.setCountedType(spu.getCountedType());
+            skuVo.setStatus(spu.getStatus());
+            skuVo.setUnitId(spu.getUnitId());
+            skuVo.setUnitName(spu.getUnitName());
+            skuVo.setUnitType(spu.getUnitType());
+            skuVo.setUnitTypeName(spu.getUnitTypeName());
+            return skuVo;
+        }).filter(Objects::nonNull).collect(Collectors.toList());
+
+        return PageResult.of(query.getPageIndex(), query.getPageSize(), total, vos);
+    }
+
+    private List<String> convertCategoryIds(long merchantNo, List<String> categoryIds, String categoryId) {
+        if (CollectionUtils.isEmpty(categoryIds)) {
+            categoryIds = new ArrayList<>();
+        }
+        if (StringUtils.isBlank(categoryId)) {
+            return categoryIds;
+        }
+        categoryIds.add(categoryId);
+
+        CategoryListQuery categoryQuery = new CategoryListQuery();
+        categoryQuery.setPid(categoryId);
+        categoryQuery.setLevel(CategoryLevel.TWO.getCode());
+        List<CategoryEntity> list = categoryService.findAll(merchantNo, categoryQuery);
+        if (CollUtil.isNotEmpty(list)) {
+            categoryIds.addAll(list.stream().map(CategoryEntity::getId).collect(Collectors.toList()));
+        }
+        return categoryIds;
     }
 
     private SkuVo convertInfo(SpuBaseVo spu, SkuEntity sku) {
