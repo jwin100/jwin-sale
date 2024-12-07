@@ -16,9 +16,9 @@ import java.util.List;
 @Data
 public class SkuDetailListVo {
 
-    private String spuId;
+    private String id;
 
-    private String skuId;
+    private String spuId;
 
     /**
      * 图片(无前缀)
