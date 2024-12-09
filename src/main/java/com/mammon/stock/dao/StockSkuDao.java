@@ -111,7 +111,7 @@ public class StockSkuDao {
         return namedParameterJdbcTemplate.update(sql, params);
     }
 
-    public int countPage(long merchantNo, long storeNo, StockSkuPageQuery query) {
+    public int countPage(long merchantNo, StockSkuPageQuery query) {
         MapSqlParameterSource params = new MapSqlParameterSource();
 
         StringBuilder sb = new StringBuilder();
@@ -119,18 +119,18 @@ public class StockSkuDao {
                 .append(" count(sku.id) ")
                 .append(" FROM m_stock_sku sku ")
                 .append(" LEFT JOIN m_stock_spu spu on spu.id = sku.stock_spu_id ")
-                .append(" WHERE spu.deleted = 0 AND spu.merchant_no = :merchantNo AND spu.store_no = :storeNo ")
+                .append(" WHERE spu.deleted = 0 AND sku.deleted = 0 AND spu.merchant_no = :merchantNo AND spu.store_no = :storeNo ")
                 .append(pageWhere(query, params));
 
         params.addValue("merchantNo", merchantNo);
-        params.addValue("storeNo", storeNo);
+        params.addValue("storeNo", query.getStoreNo());
 
         String sql = sb.toString();
 
         return namedParameterJdbcTemplate.queryForObject(sql, params, Integer.class);
     }
 
-    public List<StockSkuEntity> findPage(long merchantNo, long storeNo, StockSkuPageQuery query) {
+    public List<StockSkuEntity> findPage(long merchantNo, StockSkuPageQuery query) {
         MapSqlParameterSource params = new MapSqlParameterSource();
 
         StringBuilder sb = new StringBuilder();
@@ -138,14 +138,14 @@ public class StockSkuDao {
                 .append(" sku.* ")
                 .append(" FROM m_stock_sku sku ")
                 .append(" LEFT JOIN m_stock_spu spu on spu.id = sku.stock_spu_id ")
-                .append(" WHERE spu.deleted = 0 AND spu.merchant_no = :merchantNo AND spu.store_no = :storeNo ")
+                .append(" WHERE spu.deleted = 0 AND sku.deleted = 0 AND spu.merchant_no = :merchantNo AND spu.store_no = :storeNo ")
                 .append(pageWhere(query, params))
                 .append(" ORDER BY sku.create_time desc ");
 
         sb.append(" limit :limit offset :offset ");
 
         params.addValue("merchantNo", merchantNo);
-        params.addValue("storeNo", storeNo);
+        params.addValue("storeNo", query.getStoreNo());
         params.addValue("limit", query.getPageSize());
         params.addValue("offset", query.getOffset());
 

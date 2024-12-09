@@ -19,6 +19,8 @@ public class StockSkuPageQuery extends PageQuery {
      */
     private String searchKey;
 
+    private Long storeNo;
+
     /**
      * 商品状态(1:启用，2：禁用)
      */

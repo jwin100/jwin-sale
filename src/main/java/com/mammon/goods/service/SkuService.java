@@ -106,11 +106,14 @@ public class SkuService {
             dto.setSkuNo(dto.getSkuCode());
         }
 
+        String joinSpec = null;
         // 多规格商品，选中规格值组合后根据此字段进行筛选
-        String joinSpec = dto.getSpecs().stream()
-                .map(SkuSpecDto::getSpecValueId)
-                .sorted(Comparator.comparing(x -> x))
-                .collect(Collectors.joining("_"));
+        if (CollUtil.isNotEmpty(dto.getSpecs())) {
+            joinSpec = dto.getSpecs().stream()
+                    .map(SkuSpecDto::getSpecValueId)
+                    .sorted(Comparator.comparing(x -> x))
+                    .collect(Collectors.joining("_"));
+        }
 
         SkuEntity entity = new SkuEntity();
         BeanUtils.copyProperties(dto, entity);
@@ -157,7 +160,7 @@ public class SkuService {
         spuDto.setCountedType(dto.getCountedType());
         spuDto.setRemark(dto.getRemark());
         spuDto.setSyncStoreNo(dto.getSyncStoreNo());
-        spuDto.setPictures(dto.getPictures());
+        spuDto.setPictures(dto.getPictures().stream().filter(Objects::nonNull).collect(Collectors.toList()));
 
         String skuName = dto.getName();
         if (CollUtil.isNotEmpty(dto.getSpecs())) {
@@ -233,7 +236,7 @@ public class SkuService {
         spuDto.setUnitId(dto.getUnitId());
         spuDto.setCountedType(dto.getCountedType());
         spuDto.setRemark(dto.getRemark());
-        spuDto.setPictures(dto.getPictures());
+        spuDto.setPictures(dto.getPictures().stream().filter(Objects::nonNull).collect(Collectors.toList()));
 
         String skuName = dto.getName();
         if (CollUtil.isNotEmpty(dto.getSpecs())) {

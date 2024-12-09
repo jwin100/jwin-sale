@@ -1,5 +1,7 @@
 package com.mammon.stock.service;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.mammon.common.Generate;
 import com.mammon.common.PageResult;
 import com.mammon.common.PageVo;
@@ -37,10 +39,7 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -371,7 +370,7 @@ public class StockSpuService {
 
             // 商品图
             List<String> pictures = JsonUtil.toList(x.getPictures(), String.class);
-            vo.setPicture(pictures.stream().findFirst().orElse(null));
+            vo.setPicture(pictures.stream().filter(Objects::nonNull).findFirst().orElse(null));
             // 单位
             if (unit != null) {
                 vo.setUnitName(unit.getName());

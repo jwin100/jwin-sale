@@ -267,11 +267,14 @@ public class StockSkuService {
 
     public PageVo<StockSkuDetailListVo> page(long merchantNo, long storeNo, String accountId, StockSkuPageQuery query) {
         query.setCategoryIds(convertCategoryIds(merchantNo, query.getCategoryIds(), query.getCategoryId()));
-        int total = stockSkuDao.countPage(merchantNo, storeNo, query);
+        if (query.getStoreNo() == null) {
+            query.setStoreNo(storeNo);
+        }
+        int total = stockSkuDao.countPage(merchantNo, query);
         if (total <= 0) {
             return PageResult.of();
         }
-        List<StockSkuEntity> list = stockSkuDao.findPage(merchantNo, storeNo, query);
+        List<StockSkuEntity> list = stockSkuDao.findPage(merchantNo, query);
         if (CollectionUtils.isEmpty(list)) {
             return PageResult.of();
         }

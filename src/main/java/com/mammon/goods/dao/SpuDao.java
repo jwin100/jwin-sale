@@ -173,7 +173,7 @@ public class SpuDao {
                 .append(" count(distinct spu.id) ")
                 .append(" FROM m_goods_spu spu ")
                 .append(" LEFT JOIN m_goods_sku sku on spu.id = sku.spu_id ")
-                .append(" WHERE spu.deleted = 0 AND spu.merchant_no = :merchantNo ")
+                .append(" WHERE spu.deleted = 0  AND sku.deleted = 0 AND spu.merchant_no = :merchantNo ")
                 .append(pageWhere(query, params));
 
         params.addValue("merchantNo", merchantNo);
@@ -191,7 +191,7 @@ public class SpuDao {
                 .append(" distinct spu.* ")
                 .append(" FROM m_goods_spu spu ")
                 .append(" LEFT JOIN m_goods_sku sku on spu.id = sku.spu_id ")
-                .append(" WHERE spu.deleted = 0 AND spu.merchant_no = :merchantNo ")
+                .append(" WHERE spu.deleted = 0 AND sku.deleted = 0 AND spu.merchant_no = :merchantNo ")
                 .append(pageWhere(query, params))
                 .append(" ORDER BY spu.create_time desc ");
 

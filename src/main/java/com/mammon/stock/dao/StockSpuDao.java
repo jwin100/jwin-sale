@@ -161,7 +161,7 @@ public class StockSpuDao {
                 .append(" count(distinct spu.id) ")
                 .append(" FROM m_stock_spu spu ")
                 .append(" LEFT JOIN m_stock_sku sku on spu.id = sku.stock_spu_id ")
-                .append(" WHERE spu.deleted = 0 AND spu.merchant_no = :merchantNo ")
+                .append(" WHERE spu.deleted = 0  AND sku.deleted = 0 AND spu.merchant_no = :merchantNo ")
                 .append(pageWhere(query, params));
 
         params.addValue("merchantNo", merchantNo);
@@ -179,7 +179,7 @@ public class StockSpuDao {
                 .append(" distinct spu.* ")
                 .append(" FROM m_stock_spu spu ")
                 .append(" LEFT JOIN m_stock_sku sku on spu.id = sku.stock_spu_id ")
-                .append(" WHERE spu.deleted = 0 AND spu.merchant_no = :merchantNo ")
+                .append(" WHERE spu.deleted = 0  AND sku.deleted = 0 AND spu.merchant_no = :merchantNo ")
                 .append(pageWhere(query, params))
                 .append(" ORDER BY spu.create_time desc ");
 
