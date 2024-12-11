@@ -122,6 +122,7 @@ public class StockSkuService {
         stockSkuDao.edit(entity);
     }
 
+    // 删除所有门店下单个sku信息
     public void deleteBySkuId(String skuId) {
         stockSkuDao.deletedBySkuId(skuId);
     }

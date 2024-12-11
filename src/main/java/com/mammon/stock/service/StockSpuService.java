@@ -170,10 +170,17 @@ public class StockSpuService {
         stockSpuDao.editStatus(stockSpu.getId(), status);
     }
 
+    /**
+     * 删除商品库触发-删除所有门店下商品信息
+     *
+     * @param merchantNo
+     * @param spuId
+     */
     @Transactional(rollbackFor = Exception.class)
     public void deletedBySpuId(long merchantNo, String spuId) {
         List<StockSkuEntity> skus = stockSkuService.findBaseListBySpuId(merchantNo, spuId);
         stockSpuDao.deleteBySpuId(merchantNo, spuId);
+        // 删除所有门店下sku
         skus.stream().map(StockSkuEntity::getSkuId).distinct().forEach(x -> {
             stockSkuService.deleteBySkuId(x);
         });
