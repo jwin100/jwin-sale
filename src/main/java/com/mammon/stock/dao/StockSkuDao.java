@@ -99,14 +99,14 @@ public class StockSkuDao {
         return namedParameterJdbcTemplate.update(sql, params);
     }
 
-    public int deleted(String id) {
+    public int deletedBySkuId(String skuId) {
         StringBuilder sb = new StringBuilder();
-        sb.append("delete from m_stock_sku ")
-                .append(" where id = :id ");
+        sb.append("update from m_stock_sku set deleted = 1 ")
+                .append(" where sku_id = :skuId ");
 
         String sql = sb.toString();
         MapSqlParameterSource params = new MapSqlParameterSource();
-        params.addValue("id", id);
+        params.addValue("skuId", skuId);
 
         return namedParameterJdbcTemplate.update(sql, params);
     }
@@ -262,17 +262,20 @@ public class StockSkuDao {
         return namedParameterJdbcTemplate.query(sql, params, rowMapper);
     }
 
-    public List<StockSkuEntity> findListBySpuId(long merchantNo, long storeNo, String spuId) {
+    public List<StockSkuEntity> findListBySpuId(long merchantNo, Long storeNo, String spuId) {
         MapSqlParameterSource params = new MapSqlParameterSource();
 
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT ")
                 .append(" * ")
                 .append(" FROM  m_stock_sku ")
-                .append(" WHERE merchant_no = :merchantNo AND store_no = :storeNo ")
+                .append(" WHERE merchant_no = :merchantNo ")
                 .append(" AND spu_id = :spuId ");
+        if(storeNo!=null){
+            sb.append(" AND store_no = :storeNo ");
+            params.addValue("storeNo", storeNo);
+        }
         params.addValue("merchantNo", merchantNo);
-        params.addValue("storeNo", storeNo);
         params.addValue("spuId", spuId);
 
         String sql = sb.toString();

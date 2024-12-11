@@ -97,6 +97,19 @@ public class StockSpuDao {
         return namedParameterJdbcTemplate.update(sql, params);
     }
 
+    public int deleteBySpuId(long merchantNo, String spuId) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("update m_stock_spu set deleted = 1 ")
+                .append(" where spu_id = :spuId AND merchant_no = :merchantNo ");
+
+        String sql = sb.toString();
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("spuId", spuId);
+        params.addValue("merchantNo", merchantNo);
+
+        return namedParameterJdbcTemplate.update(sql, params);
+    }
+
     public StockSpuEntity findById(String id) {
         MapSqlParameterSource params = new MapSqlParameterSource();
 

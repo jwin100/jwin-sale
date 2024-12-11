@@ -26,6 +26,7 @@ import com.mammon.stock.domain.entity.StockSkuEntity;
 import com.mammon.stock.domain.entity.StockSpuEntity;
 import com.mammon.stock.domain.query.StockSkuPageQuery;
 import com.mammon.stock.domain.vo.StockSkuDetailListVo;
+import com.mammon.stock.service.StockSkuService;
 import com.mammon.stock.service.StockSpuService;
 import com.mammon.utils.AmountUtil;
 import com.mammon.utils.JsonUtil;
@@ -66,6 +67,8 @@ public class SkuService {
     private UnitService unitService;
     @Resource
     private CategoryService categoryService;
+    @Autowired
+    private StockSkuService stockSkuService;
 
     @Transactional(rollbackFor = Exception.class)
     public List<StockSkuDto> batchEdit(long merchantNo, String spuId, List<SkuDto> skuDtos) {
@@ -260,6 +263,7 @@ public class SkuService {
         spuService.edit(merchantNo, accountId, sku.getSpuId(), spuDto);
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public void deleteBySkuId(long merchantNo, String skuId) {
         SkuEntity sku = skuDao.findById(skuId);
         if (sku == null) {
@@ -272,6 +276,7 @@ public class SkuService {
         } else {
             // 只删除当前sku
             delete(skuId);
+            skuSpecService.deleteBySkuId(skuId);
         }
     }
 
@@ -283,8 +288,11 @@ public class SkuService {
         });
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public void delete(String id) {
         skuDao.delete(id);
+        // 删除所有门店sku信息
+        stockSkuService.deleteBySkuId(id);
     }
 
     public SkuDetailVo findDetailById(long merchantNo, String skuId) {

@@ -16,7 +16,6 @@ import com.mammon.goods.domain.vo.SkuSpecVo;
 import com.mammon.goods.service.CategoryService;
 import com.mammon.goods.service.SkuSpecService;
 import com.mammon.goods.service.UnitService;
-import com.mammon.merchant.domain.entity.MerchantStoreEntity;
 import com.mammon.merchant.domain.vo.MerchantStoreVo;
 import com.mammon.merchant.service.MerchantStoreService;
 import com.mammon.stock.dao.StockSkuDao;
@@ -33,7 +32,6 @@ import com.mammon.utils.JsonUtil;
 import com.mammon.utils.StockUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -122,6 +120,10 @@ public class StockSkuService {
         BeanUtils.copyProperties(dto, entity);
         entity.setId(id);
         stockSkuDao.edit(entity);
+    }
+
+    public void deleteBySkuId(String skuId) {
+        stockSkuDao.deletedBySkuId(skuId);
     }
 
     /**
@@ -367,6 +369,10 @@ public class StockSkuService {
     public List<StockSkuVo> findListBySpuId(long merchantNo, long storeNo, String spuId) {
         List<StockSkuEntity> stockSkus = stockSkuDao.findListBySpuId(merchantNo, storeNo, spuId);
         return stockSkus.stream().map(this::convertStockSku).collect(Collectors.toList());
+    }
+
+    public List<StockSkuEntity> findBaseListBySpuId(long merchantNo, String spuId) {
+        return stockSkuDao.findListBySpuId(merchantNo, null, spuId);
     }
 
     public List<StockSkuEntity> findListBySkuId(String skuId) {

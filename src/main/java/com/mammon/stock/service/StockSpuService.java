@@ -1,7 +1,5 @@
 package com.mammon.stock.service;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
 import com.mammon.common.Generate;
 import com.mammon.common.PageResult;
 import com.mammon.common.PageVo;
@@ -18,7 +16,6 @@ import com.mammon.goods.service.UnitService;
 import com.mammon.merchant.domain.entity.MerchantStoreEntity;
 import com.mammon.merchant.domain.vo.MerchantStoreVo;
 import com.mammon.merchant.service.MerchantStoreService;
-import com.mammon.stock.dao.StockSkuDao;
 import com.mammon.stock.dao.StockSpuDao;
 import com.mammon.stock.domain.dto.StockSpuDto;
 import com.mammon.stock.domain.entity.StockSkuEntity;
@@ -171,6 +168,15 @@ public class StockSpuService {
             return;
         }
         stockSpuDao.editStatus(stockSpu.getId(), status);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void deletedBySpuId(long merchantNo, String spuId) {
+        List<StockSkuEntity> skus = stockSkuService.findBaseListBySpuId(merchantNo, spuId);
+        stockSpuDao.deleteBySpuId(merchantNo, spuId);
+        skus.stream().map(StockSkuEntity::getSkuId).distinct().forEach(x -> {
+            stockSkuService.deleteBySkuId(x);
+        });
     }
 
     public StockSpuEntity findById(String id) {
