@@ -101,7 +101,7 @@ public class StockSkuDao {
 
     public int deletedBySkuId(String skuId) {
         StringBuilder sb = new StringBuilder();
-        sb.append("update from m_stock_sku set deleted = 1 ")
+        sb.append("update m_stock_sku set deleted = 1 ")
                 .append(" where sku_id = :skuId ");
 
         String sql = sb.toString();
@@ -162,7 +162,7 @@ public class StockSkuDao {
         sb.append("SELECT ")
                 .append(" * ")
                 .append(" FROM  m_stock_sku ")
-                .append(" WHERE stock_spu_id = :stockSpuId ");
+                .append(" WHERE stock_spu_id = :stockSpuId  AND deleted = 0");
         params.addValue("stockSpuId", stockSpuId);
 
         String sql = sb.toString();
@@ -178,7 +178,7 @@ public class StockSkuDao {
         sb.append("SELECT ")
                 .append(" * ")
                 .append(" FROM  m_stock_sku ")
-                .append(" WHERE stock_spu_id in ( :stockSpuIds ) ");
+                .append(" WHERE stock_spu_id in ( :stockSpuIds )  AND deleted = 0 ");
         params.addValue("stockSpuIds", stockSpuIds);
 
         String sql = sb.toString();
@@ -215,7 +215,7 @@ public class StockSkuDao {
                 .append(" * ")
                 .append(" FROM  m_stock_sku ")
                 .append(" WHERE merchant_no = :merchantNo AND store_no = :storeNo ")
-                .append(" AND sku_id = :skuId ");
+                .append(" AND sku_id = :skuId  AND deleted = 0 ");
         params.addValue("merchantNo", merchantNo);
         params.addValue("storeNo", storeNo);
         params.addValue("skuId", skuId);
@@ -234,7 +234,7 @@ public class StockSkuDao {
         sb.append("SELECT ")
                 .append(" * ")
                 .append(" FROM  m_stock_sku ")
-                .append(" WHERE sku_id = :skuId ");
+                .append(" WHERE sku_id = :skuId AND deleted = 0");
         params.addValue("skuId", skuId);
 
         String sql = sb.toString();
@@ -251,7 +251,7 @@ public class StockSkuDao {
                 .append(" * ")
                 .append(" FROM  m_stock_sku ")
                 .append(" WHERE merchant_no = :merchantNo AND store_no = :storeNo ")
-                .append(" AND sku_id in ( :skuIds ) ");
+                .append(" AND sku_id in ( :skuIds )   AND deleted = 0");
         params.addValue("merchantNo", merchantNo);
         params.addValue("storeNo", storeNo);
         params.addValue("skuIds", skuIds);
@@ -270,7 +270,7 @@ public class StockSkuDao {
                 .append(" * ")
                 .append(" FROM  m_stock_sku ")
                 .append(" WHERE merchant_no = :merchantNo ")
-                .append(" AND spu_id = :spuId ");
+                .append(" AND spu_id = :spuId   AND deleted = 0");
         if(storeNo!=null){
             sb.append(" AND store_no = :storeNo ");
             params.addValue("storeNo", storeNo);
@@ -292,7 +292,7 @@ public class StockSkuDao {
                 .append(" * ")
                 .append(" FROM  m_stock_sku ")
                 .append(" WHERE merchant_no = :merchantNo AND store_no = :storeNo ")
-                .append(" AND spu_id in ( :spuIds ) ");
+                .append(" AND spu_id in ( :spuIds )   AND deleted = 0");
         params.addValue("merchantNo", merchantNo);
         params.addValue("storeNo", storeNo);
         params.addValue("spuIds", spuIds);

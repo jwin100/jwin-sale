@@ -135,7 +135,7 @@ public class StockSpuDao {
                 .append(" * ")
                 .append(" FROM  m_stock_spu ")
                 .append(" WHERE merchant_no = :merchantNo AND store_no = :storeNo ")
-                .append(" AND spu_id = :spuId ");
+                .append(" AND spu_id = :spuId and deleted = 0 ");
         params.addValue("merchantNo", merchantNo);
         params.addValue("storeNo", storeNo);
         params.addValue("spuId", spuId);
@@ -155,7 +155,7 @@ public class StockSpuDao {
                 .append(" * ")
                 .append(" FROM  m_stock_spu ")
                 .append(" WHERE merchant_no = :merchantNo AND store_no = :storeNo ")
-                .append(" AND spu_id IN ( :spuIds ) ");
+                .append(" AND spu_id IN ( :spuIds )  and deleted = 0 ");
         params.addValue("merchantNo", merchantNo);
         params.addValue("storeNo", storeNo);
         params.addValue("spuIds", spuIds);
@@ -216,7 +216,7 @@ public class StockSpuDao {
                 .append(" distinct spu.* ")
                 .append(" FROM m_stock_spu spu ")
                 .append(" LEFT JOIN m_stock_sku sku on spu.id = sku.stock_spu_id ")
-                .append(" WHERE spu.deleted = 0 AND spu.merchant_no = :merchantNo ")
+                .append(" WHERE spu.deleted = 0 AND sku.deleted = 0 AND spu.merchant_no = :merchantNo ")
                 .append(listWhere(query, params))
                 .append(" ORDER BY spu.create_time desc ");
         params.addValue("merchantNo", merchantNo);
