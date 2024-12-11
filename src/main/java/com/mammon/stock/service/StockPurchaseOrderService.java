@@ -74,7 +74,7 @@ public class StockPurchaseOrderService {
     private StockSpuService stockSpuService;
 
     @Transactional(rollbackFor = CustomException.class)
-    public void create(long merchantNo, long storeNo, String accountId, StockPurchaseOrderDto dto) {
+    public String create(long merchantNo, long storeNo, String accountId, StockPurchaseOrderDto dto) {
         String purchaseNo = leafCodeService.generateDocketNo(DocketType.PURCHASE_ORDER);
         if (StringUtils.isBlank(purchaseNo)) {
             throw new CustomException("创建异常:采购单号异常");
@@ -104,6 +104,8 @@ public class StockPurchaseOrderService {
         entity.setUpdateTime(LocalDateTime.now());
         stockPurchaseOrderDao.save(entity);
         stockPurchaseOrderSkuService.batchSave(entity.getId(), dto.getSkus());
+
+        return entity.getId();
     }
 
     @Transactional(rollbackFor = CustomException.class)

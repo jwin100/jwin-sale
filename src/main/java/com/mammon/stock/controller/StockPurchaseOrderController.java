@@ -33,12 +33,11 @@ public class StockPurchaseOrderController {
      * @return
      */
     @PostMapping
-    public ResultJson<Void> create(@RequestHeader long merchantNo,
+    public ResultJson<String> create(@RequestHeader long merchantNo,
                                    @RequestHeader long storeNo,
                                    @RequestHeader String accountId,
                                    @RequestBody StockPurchaseOrderDto dto) {
-        stockPurchaseOrderService.create(merchantNo, storeNo, accountId, dto);
-        return ResultJson.ok();
+        return ResultJson.ok(stockPurchaseOrderService.create(merchantNo, storeNo, accountId, dto));
     }
 
     @PutMapping("/{id}")
