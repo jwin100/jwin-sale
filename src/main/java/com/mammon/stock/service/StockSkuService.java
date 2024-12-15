@@ -15,6 +15,7 @@ import com.mammon.goods.domain.query.CategoryListQuery;
 import com.mammon.goods.domain.vo.SkuSpecVo;
 import com.mammon.goods.service.CategoryService;
 import com.mammon.goods.service.SkuSpecService;
+import com.mammon.goods.service.SpuService;
 import com.mammon.goods.service.UnitService;
 import com.mammon.merchant.domain.vo.MerchantStoreVo;
 import com.mammon.merchant.service.MerchantStoreService;
@@ -70,6 +71,7 @@ public class StockSkuService {
     private MerchantStoreService merchantStoreService;
     @Resource
     private StockSpuDao stockSpuDao;
+    private SpuService spuService;
 
     /**
      * 批量保存商品规格信息到门店商品规格表中
@@ -254,6 +256,7 @@ public class StockSkuService {
         detailVo.setCountedType(spu.getCountedType());
         detailVo.setRemark(spu.getRemark());
         detailVo.setStatus(spu.getStatus());
+        detailVo.setGoodsStatus(spu.getGoodsStatus());
         detailVo.setCreateTime(spu.getCreateTime());
         detailVo.setPictures(JsonUtil.toList(spu.getPictures(), String.class));
         detailVo.setSkuNo(sku.getSkuNo());
@@ -305,6 +308,7 @@ public class StockSkuService {
             stockSkuVo.setCountedType(stockSpu.getCountedType());
             // 商品spu的状态
             stockSkuVo.setStatus(stockSpu.getStatus());
+            stockSkuVo.setGoodsStatus(stockSpu.getGoodsStatus());
             if (unit != null) {
                 stockSkuVo.setUnitId(unit.getId());
                 stockSkuVo.setUnitName(unit.getName());

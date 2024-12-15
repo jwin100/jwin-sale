@@ -66,6 +66,10 @@ public class StockSkuDetailListVo {
 
     private String statusName;
 
+    private int goodsStatus;
+
+    private String goodsStatusName;
+
     /**
      * 单位
      */
@@ -91,5 +95,9 @@ public class StockSkuDetailListVo {
 
     public String getStatusName() {
         return IEnum.getNameByCode(this.getStatus(), CommonStatus.class);
+    }
+
+    public String getGoodsStatusName() {
+        return IEnum.getNameByCode(this.getGoodsStatus(), CommonStatus.class);
     }
 }

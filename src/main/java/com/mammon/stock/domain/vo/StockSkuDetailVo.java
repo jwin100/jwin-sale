@@ -104,6 +104,10 @@ public class StockSkuDetailVo {
 
     private String statusName;
 
+    private int goodsStatus;
+
+    private String goodsStatusName;
+
     private LocalDateTime createTime;
 
     /**
@@ -150,5 +154,9 @@ public class StockSkuDetailVo {
 
     public String getUnitTypeName() {
         return IEnum.getNameByCode(this.getUnitType(), UnitType.class);
+    }
+
+    public String getGoodsStatusName() {
+        return IEnum.getNameByCode(this.getGoodsStatus(), CommonStatus.class);
     }
 }
